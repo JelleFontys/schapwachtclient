@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* Montserrat als variabel lettertype: alle gewichten in één bestand en
+   lokaal meegeleverd, dus geen verzoek naar Google Fonts. */
+@import "@fontsource-variable/montserrat";
+
+@theme {
+  /* Palet van SchapWacht. De laatste drie kleuren zijn tegelijk de
+     statuskleuren, zodat de huisstijl en de betekenis in de app
+     dezelfde taal spreken. */
+  --color-cornsilk: #fefae0;
+  --color-cornsilk-diep: #f6efcd;
+  --color-black-forest: #283618;
+  --color-olive-leaf: #606c38;
+  --color-sunlit-clay: #dda15e;
+  --color-copperwood: #bc6c25;
+
+  --font-sans: "Montserrat Variable", system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-cornsilk);
+    color: var(--color-black-forest);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+  }
+
+  /* Datums en aantallen uitlijnen, zodat een werklijst netjes onder
+     elkaar staat. */
+  time,
+  [data-getal] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-olive-leaf);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
