@@ -9,6 +9,8 @@ type Props = {
   autoComplete?: string;
   vereist?: boolean;
   placeholder?: string;
+  min?: number;
+  max?: number;
 };
 
 /**
@@ -25,6 +27,8 @@ export function Veld({
   autoComplete,
   vereist = true,
   placeholder,
+  min,
+  max,
 }: Props) {
   const id = useId();
   const uitlegId = `${id}-uitleg`;
@@ -49,6 +53,11 @@ export function Veld({
         required={vereist}
         autoComplete={autoComplete}
         placeholder={placeholder}
+        min={min}
+        max={max}
+        // Op een telefoon het cijfertoetsenbord in plaats van het hele
+        // toetsenbord met een cijferrij erboven.
+        inputMode={type === "number" ? "numeric" : undefined}
         aria-describedby={uitleg ? uitlegId : undefined}
         className="mt-2 w-full rounded-xl border border-black-forest/15 bg-white/60 px-3.5 py-2.5
                    text-black-forest placeholder:text-black-forest/35

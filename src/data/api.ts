@@ -20,12 +20,20 @@ export function apiUrl(pad: string) {
  */
 export class ApiFout extends Error {
   readonly status: number;
+  /** Alles wat de server naast de melding meestuurde. */
+  readonly gegevens: Record<string, unknown>;
 
-  constructor(status: number, bericht: string) {
+  constructor(status: number, bericht: string, gegevens: Record<string, unknown> = {}) {
     super(bericht);
     this.name = "ApiFout";
     this.status = status;
+    this.gegevens = gegevens;
   }
+}
+
+/** Een melding die je aan de gebruiker kunt laten zien, wat er ook misging. */
+export function meldingVan(fout: unknown, standaard = "Er ging iets mis.") {
+  return fout instanceof Error && fout.message ? fout.message : standaard;
 }
 
 async function stuur<T>(pad: string, opties: RequestInit): Promise<T> {
@@ -56,7 +64,11 @@ async function stuur<T>(pad: string, opties: RequestInit): Promise<T> {
     const melding =
       (inhoud as { fout?: string } | null)?.fout ??
       `De server gaf status ${response.status}.`;
-    throw new ApiFout(response.status, melding);
+    throw new ApiFout(
+      response.status,
+      melding,
+      (inhoud as Record<string, unknown> | null) ?? {},
+    );
   }
 
   return inhoud as T;
@@ -64,6 +76,9 @@ async function stuur<T>(pad: string, opties: RequestInit): Promise<T> {
 
 export const haalOp = <T>(pad: string, opties: RequestInit = {}) =>
   stuur<T>(pad, { method: "GET", ...opties });
+
+export const wijzig = <T>(pad: string, gegevens: unknown, opties: RequestInit = {}) =>
+  stuur<T>(pad, { method: "PATCH", body: JSON.stringify(gegevens), ...opties });
 
 export const verstuur = <T>(pad: string, gegevens?: unknown, opties: RequestInit = {}) =>
   stuur<T>(pad, {

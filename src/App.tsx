@@ -26,6 +26,7 @@ export default function App() {
           <Route element={<VereistInlog />}>
             <Route path="/" element={<Navigate to="/plattegrond" replace />} />
             <Route path="/plattegrond" element={<Plattegrond />} />
+            <Route path="/plattegrond/:id" element={<Plattegrond />} />
             <Route path="/winkel" element={<Winkel />} />
 
             {/* Onbekend pad: terug naar het begin, dat verwijst verder. */}

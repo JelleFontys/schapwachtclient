@@ -19,15 +19,18 @@ export function Balk() {
 
   return (
     <header className="border-b border-black-forest/10">
-      <div className="mx-auto flex max-w-3xl items-center gap-1 px-5 py-3">
+      <div className="mx-auto flex max-w-5xl items-center gap-1 px-5 py-3">
         <span className="mr-3 font-extrabold tracking-tight">SchapWacht</span>
 
         <nav className="flex items-center gap-1">
           <NavLink to="/plattegrond" className={stijl}>
             Plattegrond
           </NavLink>
+          {/* "Team" en niet "Winkel": de eerste plattegrond heet meestal
+              Winkel, en dan staan er twee links met dezelfde tekst op de
+              pagina die naar iets anders gaan. */}
           <NavLink to="/winkel" className={stijl}>
-            Winkel
+            Team
           </NavLink>
         </nav>
 

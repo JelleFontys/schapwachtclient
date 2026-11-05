@@ -67,7 +67,7 @@ export default function Winkel() {
     <>
       <Balk />
 
-      <main className="mx-auto max-w-3xl px-5 py-12">
+      <main className="mx-auto max-w-5xl px-5 py-12">
         <h1 className="text-3xl font-extrabold tracking-tight">
           {winkel?.naam ?? "Je winkel"}
         </h1>
