@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { Kader } from "../components/Kader";
 import { Knop } from "../components/Knop";
@@ -10,13 +10,19 @@ import { useSessie } from "../auth/authContext";
 export default function Inloggen() {
   const { gebruiker, bezig: sessieBezig, logIn } = useSessie();
   const navigeer = useNavigate();
+  const plek = useLocation();
+
+  // VereistInlog onthoudt waar je heen wilde toen je nog niet ingelogd
+  // was. Kwam je gewoon binnenlopen, dan is dat de plattegrond.
+  const vandaan = (plek.state as { vandaan?: string } | null)?.vandaan;
+  const daarna = vandaan && vandaan !== "/" ? vandaan : "/plattegrond";
 
   const [email, setEmail] = useState("");
   const [wachtwoord, setWachtwoord] = useState("");
   const [fout, setFout] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
 
-  if (!sessieBezig && gebruiker) return <Navigate to="/winkel" replace />;
+  if (!sessieBezig && gebruiker) return <Navigate to={daarna} replace />;
 
   async function verstuurFormulier(event: React.FormEvent) {
     event.preventDefault();
@@ -25,7 +31,7 @@ export default function Inloggen() {
 
     try {
       await logIn(email, wachtwoord);
-      navigeer("/winkel", { replace: true });
+      navigeer(daarna, { replace: true });
     } catch (probleem) {
       setFout(probleem instanceof Error ? probleem.message : "Inloggen is niet gelukt.");
     } finally {

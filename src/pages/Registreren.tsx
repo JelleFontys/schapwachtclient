@@ -29,7 +29,7 @@ export default function Registreren() {
   const [fout, setFout] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
 
-  if (!sessieBezig && gebruiker) return <Navigate to="/winkel" replace />;
+  if (!sessieBezig && gebruiker) return <Navigate to="/plattegrond" replace />;
 
   async function verstuurFormulier(event: React.FormEvent) {
     event.preventDefault();
@@ -43,7 +43,7 @@ export default function Registreren() {
         wachtwoord,
         ...(keuze === "nieuw" ? { winkelnaam } : { uitnodigingscode: code }),
       });
-      navigeer("/winkel", { replace: true });
+      navigeer("/plattegrond", { replace: true });
     } catch (probleem) {
       setFout(probleem instanceof Error ? probleem.message : "Registreren is niet gelukt.");
     } finally {

@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 
 /** Het kader om de inlog- en registratiepagina. */
@@ -15,9 +14,7 @@ export function Kader({
 }) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-5 py-12">
-      <Link to="/" className="text-sm font-semibold text-olive-leaf hover:text-black-forest">
-        SchapWacht
-      </Link>
+      <p className="text-sm font-semibold text-olive-leaf">SchapWacht</p>
 
       <h1 className="mt-6 text-3xl font-extrabold tracking-tight">{titel}</h1>
       <p className="mt-2 leading-relaxed text-black-forest/70">{uitleg}</p>
