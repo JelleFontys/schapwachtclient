@@ -6,6 +6,10 @@ type Props = {
   open: boolean;
   sluit: () => void;
   titel: string;
+  /** Een tweede regel onder de titel. */
+  onder?: string;
+  /** Breder venster, voor een formulier met twee kolommen. */
+  breed?: boolean;
   children: ReactNode;
 };
 
@@ -18,7 +22,7 @@ type Props = {
  * code en gaat bijna altijd ergens mis voor iemand met een
  * toetsenbord of schermlezer.
  */
-export function Venster({ open, sluit, titel, children }: Props) {
+export function Venster({ open, sluit, titel, onder, breed = false, children }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const titelId = useId();
 
@@ -40,14 +44,17 @@ export function Venster({ open, sluit, titel, children }: Props) {
       onClick={(event) => {
         if (event.target === ref.current) sluit();
       }}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-cornsilk p-0 text-black-forest
-                 shadow-xl backdrop:bg-black-forest/40"
+      className={`m-auto w-[calc(100%-2rem)] rounded-2xl bg-cornsilk p-0 text-black-forest shadow-xl
+                  backdrop:bg-black-forest/40 ${breed ? "max-w-2xl" : "max-w-md"}`}
     >
       <div className="p-6">
         <div className="flex items-start justify-between gap-4">
-          <h2 id={titelId} className="text-xl font-extrabold tracking-tight">
-            {titel}
-          </h2>
+          <div>
+            <h2 id={titelId} className="text-xl font-extrabold tracking-tight">
+              {titel}
+            </h2>
+            {onder && <p className="mt-0.5 text-sm text-black-forest/60">{onder}</p>}
+          </div>
           <button
             type="button"
             onClick={sluit}

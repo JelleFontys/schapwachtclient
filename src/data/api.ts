@@ -77,6 +77,9 @@ async function stuur<T>(pad: string, opties: RequestInit): Promise<T> {
 export const haalOp = <T>(pad: string, opties: RequestInit = {}) =>
   stuur<T>(pad, { method: "GET", ...opties });
 
+export const verwijder = <T = void>(pad: string, opties: RequestInit = {}) =>
+  stuur<T>(pad, { method: "DELETE", ...opties });
+
 export const wijzig = <T>(pad: string, gegevens: unknown, opties: RequestInit = {}) =>
   stuur<T>(pad, { method: "PATCH", body: JSON.stringify(gegevens), ...opties });
 

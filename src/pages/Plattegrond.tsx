@@ -1,25 +1,32 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Loader2, Map as MapIcoon, Ruler } from "lucide-react";
+import { Loader2, Map as MapIcoon, Pencil } from "lucide-react";
 
 import { Balk } from "../components/Balk";
 import { Knop } from "../components/Knop";
 import { Melding } from "../components/Melding";
 import { Venster } from "../components/Venster";
 import { Kiezer } from "../components/plattegrond/Kiezer";
-import { PlattegrondFormulier } from "../components/plattegrond/PlattegrondFormulier";
-import { Raster } from "../components/plattegrond/Raster";
-import { VakVenster } from "../components/plattegrond/VakVenster";
+import { NaamFormulier } from "../components/plattegrond/NaamFormulier";
+import { StellingVenster } from "../components/plattegrond/StellingVenster";
+import { Vloer } from "../components/plattegrond/Vloer";
 import { useSessie } from "../auth/authContext";
 import { meldingVan } from "../data/api";
-import { kort, plattegronden } from "../data/plattegronden";
-import type { Afmetingen, Plattegrond, PlattegrondKort, Vak } from "../data/plattegronden";
+import { kort, plattegronden, stellingen, stellingNaam } from "../data/plattegronden";
+import type {
+  Plattegrond,
+  PlattegrondKort,
+  Rand,
+  RandActie,
+  Stelling,
+  StellingInvoer,
+  Vlak,
+} from "../data/plattegronden";
 
-type Open = "nieuw" | "aanpassen" | null;
+type Open = "nieuw" | "hernoem" | null;
 
 /**
- * De plattegrond: het raster van de winkel, en wisselen tussen
- * plattegronden.
+ * De plattegrond: de vloer van bovenaf met de stellingen erop.
  *
  * Het id staat in de URL (/plattegrond/:id). Zo kun je een link naar
  * het magazijn delen, en blijft de keuze staan als je de pagina
@@ -36,7 +43,10 @@ export default function PlattegrondPagina() {
   const [detail, setDetail] = useState<Plattegrond | null>(null);
   const [detailFout, setDetailFout] = useState<{ id: string; tekst: string } | null>(null);
   const [open, setOpen] = useState<Open>(null);
-  const [gekozenVak, setGekozenVak] = useState<Vak | null>(null);
+  const [nieuwVlak, setNieuwVlak] = useState<Vlak | null>(null);
+  const [gekozen, setGekozen] = useState<Stelling | null>(null);
+  const [randBezig, setRandBezig] = useState(false);
+  const [randFout, setRandFout] = useState<string | null>(null);
 
   useEffect(() => {
     let afgebroken = false;
@@ -74,28 +84,60 @@ export default function PlattegrondPagina() {
   const huidig = detail && detail.id === id ? detail : null;
   const fout = detailFout && detailFout.id === id ? detailFout.tekst : null;
 
-  async function maakNieuw(gegevens: Afmetingen) {
-    const nieuw = await plattegronden.maak(gegevens);
+  function neemOver(nieuw: Plattegrond) {
+    setDetail(nieuw);
+    setLijst((oud) => oud?.map((p) => (p.id === nieuw.id ? kort(nieuw) : p)) ?? null);
+  }
+
+  async function maakNieuw(naam: string) {
+    const nieuw = await plattegronden.maak(naam);
     setLijst((oud) => [...(oud ?? []), kort(nieuw)]);
     setDetail(nieuw);
     setOpen(null);
     navigeer(`/plattegrond/${nieuw.id}`);
   }
 
-  async function pasAan(gegevens: Afmetingen) {
+  async function hernoem(naam: string) {
     if (!huidig) return;
-    const nieuw = await plattegronden.wijzig(huidig.id, gegevens);
-    setDetail(nieuw);
-    setLijst((oud) => oud?.map((p) => (p.id === nieuw.id ? kort(nieuw) : p)) ?? null);
+    neemOver(await plattegronden.hernoem(huidig.id, naam));
     setOpen(null);
   }
 
-  async function hernoem(vak: Vak, naam: string) {
-    const nieuw = await plattegronden.hernoemVak(vak.id, naam);
-    setDetail((oud) =>
-      oud ? { ...oud, vakken: oud.vakken.map((v) => (v.id === nieuw.id ? nieuw : v)) } : oud,
-    );
-    setGekozenVak(null);
+  async function pasRandAan(rand: Rand, actie: RandActie) {
+    if (!huidig) return;
+    setRandFout(null);
+    setRandBezig(true);
+    try {
+      neemOver(await plattegronden.rand(huidig.id, rand, actie));
+    } catch (probleem) {
+      setRandFout(meldingVan(probleem));
+    } finally {
+      setRandBezig(false);
+    }
+  }
+
+  async function zetNeer(invoer: StellingInvoer) {
+    if (!huidig || !nieuwVlak) return;
+    const nieuw = await stellingen.maak(huidig.id, nieuwVlak, invoer);
+    setDetail({ ...huidig, stellingen: [...huidig.stellingen, nieuw] });
+    setNieuwVlak(null);
+  }
+
+  async function pasStellingAan(invoer: StellingInvoer) {
+    if (!huidig || !gekozen) return;
+    const nieuw = await stellingen.wijzig(gekozen.id, invoer);
+    setDetail({
+      ...huidig,
+      stellingen: huidig.stellingen.map((s) => (s.id === nieuw.id ? nieuw : s)),
+    });
+    setGekozen(null);
+  }
+
+  async function haalStellingWeg() {
+    if (!huidig || !gekozen) return;
+    await stellingen.verwijder(gekozen.id);
+    setDetail({ ...huidig, stellingen: huidig.stellingen.filter((s) => s.id !== gekozen.id) });
+    setGekozen(null);
   }
 
   // Geen id in de URL: door naar de eerste plattegrond.
@@ -132,35 +174,56 @@ export default function PlattegrondPagina() {
               </div>
             )}
 
-            {!huidig && !fout && <Laden tekst="Raster laden" />}
+            {!huidig && !fout && <Laden tekst="Plattegrond laden" />}
 
             {huidig && (
               <section className="mt-8" aria-labelledby="plattegrond-titel">
-                <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <h1 id="plattegrond-titel" className="text-3xl font-extrabold tracking-tight">
-                      {huidig.naam}
-                    </h1>
-                    <p className="mt-1 text-sm text-black-forest/65">
-                      <span data-getal>
-                        {huidig.rijen} × {huidig.kolommen}
-                      </span>{" "}
-                      vakken · tik op een vak om het een naam te geven
-                    </p>
-                  </div>
-
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <h1 id="plattegrond-titel" className="text-3xl font-extrabold tracking-tight">
+                    {huidig.naam}
+                  </h1>
                   {magBeheren && (
-                    <div className="w-full sm:w-auto">
-                      <Knop soort="lijn" onClick={() => setOpen("aanpassen")}>
-                        <Ruler aria-hidden="true" className="size-4" />
-                        Raster aanpassen
-                      </Knop>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setOpen("hernoem")}
+                      className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm
+                                 font-semibold text-black-forest/60 hover:text-olive-leaf"
+                    >
+                      <Pencil aria-hidden="true" className="size-3.5" />
+                      Naam wijzigen
+                    </button>
                   )}
                 </div>
+                <p className="mt-1 text-sm text-black-forest/65">
+                  <span data-getal>
+                    {huidig.kolommen} × {huidig.rijen}
+                  </span>{" "}
+                  hokjes ·{" "}
+                  {huidig.stellingen.length === 1
+                    ? "1 stelling"
+                    : `${huidig.stellingen.length} stellingen`}
+                </p>
+                <p className="mt-3 max-w-prose text-sm leading-relaxed text-black-forest/75">
+                  {magBeheren
+                    ? "Tik op twee hoeken om een stelling neer te zetten. Tik op een stelling om hem in te richten. Met de plusjes maak je de vloer groter."
+                    : "Tik op een stelling om te zien hoe hij is ingericht."}
+                </p>
+
+                {randFout && (
+                  <div className="mt-4">
+                    <Melding tekst={randFout} />
+                  </div>
+                )}
 
                 <div className="mt-6">
-                  <Raster plattegrond={huidig} kies={setGekozenVak} />
+                  <Vloer
+                    plattegrond={huidig}
+                    magBeheren={magBeheren}
+                    bezig={randBezig}
+                    pasRandAan={(rand, actie) => void pasRandAan(rand, actie)}
+                    kiesVlak={setNieuwVlak}
+                    kiesStelling={setGekozen}
+                  />
                 </div>
               </section>
             )}
@@ -169,26 +232,46 @@ export default function PlattegrondPagina() {
       </main>
 
       <Venster open={open === "nieuw"} sluit={() => setOpen(null)} titel="Nieuwe plattegrond">
-        <PlattegrondFormulier knoptekst="Plattegrond aanmaken" bewaar={maakNieuw} />
+        <NaamFormulier knoptekst="Plattegrond aanmaken" bewaar={maakNieuw} />
       </Venster>
 
-      <Venster open={open === "aanpassen"} sluit={() => setOpen(null)} titel="Raster aanpassen">
-        {huidig && (
-          <PlattegrondFormulier knoptekst="Opslaan" huidig={huidig} bewaar={pasAan} />
-        )}
+      <Venster open={open === "hernoem"} sluit={() => setOpen(null)} titel="Naam wijzigen">
+        {huidig && <NaamFormulier begin={huidig.naam} knoptekst="Opslaan" bewaar={hernoem} />}
       </Venster>
 
       <Venster
-        open={gekozenVak !== null}
-        sluit={() => setGekozenVak(null)}
-        titel={gekozenVak ? `Vak ${gekozenVak.positie}` : "Vak"}
+        open={nieuwVlak !== null}
+        sluit={() => setNieuwVlak(null)}
+        titel="Nieuwe stelling"
+        onder={nieuwVlak ? beschrijfVlak(nieuwVlak) : undefined}
+        breed
       >
-        {gekozenVak && (
-          <VakVenster vak={gekozenVak} bewaar={(naam) => hernoem(gekozenVak, naam)} />
+        {nieuwVlak && <StellingVenster vlak={nieuwVlak} alleenLezen={false} bewaar={zetNeer} />}
+      </Venster>
+
+      <Venster
+        open={gekozen !== null}
+        sluit={() => setGekozen(null)}
+        titel={gekozen ? stellingNaam(gekozen) : "Stelling"}
+        onder={gekozen ? beschrijfVlak(gekozen) : undefined}
+        breed={magBeheren}
+      >
+        {gekozen && (
+          <StellingVenster
+            vlak={gekozen}
+            begin={{ links: gekozen.links, rechts: gekozen.rechts }}
+            alleenLezen={!magBeheren}
+            bewaar={pasStellingAan}
+            verwijder={haalStellingWeg}
+          />
         )}
       </Venster>
     </>
   );
+}
+
+function beschrijfVlak(vlak: Vlak) {
+  return `${vlak.breedte} × ${vlak.hoogte} hokjes, vanaf kolom ${vlak.x}, rij ${vlak.y}`;
 }
 
 function Laden({ tekst }: { tekst: string }) {
@@ -209,8 +292,8 @@ function Leeg({ magBeheren, maak }: { magBeheren: boolean; maak: () => void }) {
       {magBeheren ? (
         <>
           <p className="mt-2 leading-relaxed text-black-forest/70">
-            Maak een raster dat lijkt op je winkel: elke rij een stelling, elke kolom een
-            plank of een stuk schap. Je kunt het later altijd groter of kleiner maken.
+            Een plattegrond is de vloer van je winkel van bovenaf. Je geeft hem een naam, en
+            daarna zet je er de stellingen op.
           </p>
           <div className="mx-auto mt-6 max-w-60">
             <Knop onClick={maak}>Plattegrond aanmaken</Knop>
