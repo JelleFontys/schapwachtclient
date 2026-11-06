@@ -3,13 +3,13 @@ import type { KeyboardEvent } from "react";
 import { Minus, Plus } from "lucide-react";
 
 import {
-  kantLabels,
-  overlappen,
+  MAX_DIKTE,
   raaktRand,
   stellingNaam,
   tussen,
+  waaromNiet,
 } from "../../data/plattegronden";
-import type { Plattegrond, Rand, RandActie, Stelling, Vlak } from "../../data/plattegronden";
+import type { Kant, Plattegrond, Rand, RandActie, Stelling, Vlak } from "../../data/plattegronden";
 
 type Punt = { x: number; y: number };
 
@@ -38,6 +38,10 @@ export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, ki
   const [wijst, setWijst] = useState<Punt | null>(null);
   const [actief, setActief] = useState<Punt>({ x: 1, y: 1 });
   const [melding, setMelding] = useState<{ tekst: string; fout: boolean } | null>(null);
+  // Een selectie die niet mag, blijft rood staan tot de volgende tik.
+  // Op een telefoon is er geen muis die vooraf een voorbeeld laat zien,
+  // dus daar is dit de enige manier om te zien wát er niet mocht.
+  const [afgewezen, setAfgewezen] = useState<{ vlak: Vlak; kort: string } | null>(null);
 
   const { rijen, kolommen, stellingen } = plattegrond;
 
@@ -55,20 +59,27 @@ export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, ki
   const tabHokje = vrij(actief) ? actief : eersteVrije(rijen, kolommen, vrij);
 
   const voorbeeld = anker && wijst ? tussen(anker, wijst) : null;
-  const botst = voorbeeld ? stellingen.some((s) => overlappen(voorbeeld, s)) : false;
+  const voorbeeldFout = voorbeeld ? waaromNiet(voorbeeld, stellingen) : null;
 
   function tik(punt: Punt) {
+    setAfgewezen(null);
+
     if (!anker) {
       setAnker(punt);
-      setMelding({ tekst: "Hoek gekozen. Tik nu op de andere hoek van de stelling.", fout: false });
+      setMelding({
+        tekst: `Hoek gekozen. Tik nu op de andere hoek. Een stelling is 1 of ${MAX_DIKTE} hokjes dik.`,
+        fout: false,
+      });
       return;
     }
 
     const vlak = tussen(anker, punt);
     setAnker(null);
 
-    if (stellingen.some((s) => overlappen(vlak, s))) {
-      setMelding({ tekst: "Een stelling mag niet over een andere heen. Kies opnieuw.", fout: true });
+    const reden = waaromNiet(vlak, stellingen);
+    if (reden) {
+      setAfgewezen({ vlak, kort: reden.kort });
+      setMelding({ tekst: reden.lang, fout: true });
       return;
     }
 
@@ -78,8 +89,17 @@ export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, ki
 
   function stop() {
     setAnker(null);
+    setAfgewezen(null);
     setMelding(null);
   }
+
+  // Wat er over de vloer heen getekend wordt: het voorbeeld terwijl je
+  // kiest, of de afgewezen selectie nadat je gekozen hebt.
+  const overlay = voorbeeld
+    ? { vlak: voorbeeld, fout: voorbeeldFout?.kort ?? null }
+    : afgewezen
+      ? { vlak: afgewezen.vlak, fout: afgewezen.kort }
+      : null;
 
   /** Pijltjestoetsen: naar het volgende vrije hokje in die richting. */
   function toets(event: KeyboardEvent, punt: Punt) {
@@ -155,6 +175,25 @@ export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, ki
 
   return (
     <div>
+      {/* Boven de vloer en niet eronder: op een telefoon valt de
+          onderkant van een lange vloer buiten beeld, en dan zie je niet
+          waarom er niets gebeurt. */}
+      <p
+        aria-live="polite"
+        className={`mb-3 min-h-5 text-sm ${melding?.fout ? "font-semibold text-copperwood" : "text-black-forest/70"}`}
+      >
+        {melding?.tekst}
+        {anker && (
+          <button
+            type="button"
+            onClick={stop}
+            className="ml-2 font-semibold text-olive-leaf underline-offset-2 hover:underline"
+          >
+            Stoppen
+          </button>
+        )}
+      </p>
+
       {/* `relative` is nodig: zonder gepositioneerde ouder ontsnapt de
           verborgen tekst voor schermlezers aan dit scrollkader, en dan
           wordt op een telefoon de hele pagina te breed. */}
@@ -186,19 +225,30 @@ export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, ki
               <StellingBlok key={stelling.id} stelling={stelling} kies={kiesStelling} />
             ))}
 
-            {voorbeeld && (
+            {overlay && (
               <div
                 aria-hidden="true"
                 style={{
-                  gridColumn: `${voorbeeld.x} / span ${voorbeeld.breedte}`,
-                  gridRow: `${voorbeeld.y} / span ${voorbeeld.hoogte}`,
+                  gridColumn: `${overlay.vlak.x} / span ${overlay.vlak.breedte}`,
+                  gridRow: `${overlay.vlak.y} / span ${overlay.vlak.hoogte}`,
                 }}
-                className={`pointer-events-none z-20 rounded-sm border-2 border-dashed ${
-                  botst
-                    ? "border-copperwood bg-copperwood/20"
-                    : "border-olive-leaf bg-olive-leaf/20"
-                }`}
-              />
+                className={`pointer-events-none z-20 flex items-center justify-center rounded-sm
+                            border-2 border-dashed ${
+                              overlay.fout
+                                ? "border-copperwood bg-copperwood/25"
+                                : "border-olive-leaf bg-olive-leaf/20"
+                            }`}
+              >
+                {overlay.fout && (
+                  <span
+                    data-afgewezen
+                    className="whitespace-nowrap rounded bg-copperwood px-1 py-0.5 text-[10px]
+                               font-bold leading-none text-cornsilk sm:text-xs"
+                  >
+                    {overlay.fout}
+                  </span>
+                )}
+              </div>
             )}
           </div>
 
@@ -210,21 +260,6 @@ export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, ki
         </div>
       </div>
 
-      <p
-        aria-live="polite"
-        className={`mt-3 min-h-5 text-sm ${melding?.fout ? "text-copperwood" : "text-black-forest/70"}`}
-      >
-        {melding?.tekst}
-        {anker && (
-          <button
-            type="button"
-            onClick={stop}
-            className="ml-2 font-semibold text-olive-leaf underline-offset-2 hover:underline"
-          >
-            Stoppen
-          </button>
-        )}
-      </p>
     </div>
   );
 }
@@ -291,11 +326,7 @@ function RandKnoppen({
 
 function StellingBlok({ stelling, kies }: { stelling: Stelling; kies: (s: Stelling) => void }) {
   const staand = stelling.hoogte >= stelling.breedte;
-  const labels = kantLabels(stelling);
-  const kanten = [
-    stelling.links && { label: labels.links, naam: stelling.links.naam },
-    stelling.rechts && { label: labels.rechts, naam: stelling.rechts.naam },
-  ].filter((k): k is { label: string; naam: string } => Boolean(k));
+  const kanten = [stelling.links, stelling.rechts].filter((k): k is Kant => k !== null);
 
   return (
     <button
@@ -313,7 +344,7 @@ function StellingBlok({ stelling, kies }: { stelling: Stelling; kies: (s: Stelli
       <span className="sr-only">Stelling: </span>
       {kanten.map((kant, i) => (
         <span
-          key={kant.label}
+          key={i}
           className={`flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden
                       ${i > 0 ? (staand ? "border-l border-olive-leaf/60" : "border-t border-olive-leaf/60") : ""}`}
         >

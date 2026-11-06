@@ -18,22 +18,26 @@ type Props = {
   verwijder?: () => Promise<void>;
 };
 
-/** Een nieuwe rij krijgt evenveel plekken als de rij erboven. */
+/** Een nieuwe kant begint met één rij van zoveel producten. */
 const STANDAARD_PLEKKEN = 4;
+const nieuweKant = (): Kant => ({ naam: "", rijen: [STANDAARD_PLEKKEN] });
 
 /**
  * Een stelling inrichten, in de drie stappen van de schets:
- * 1. een naam per kant,
- * 2. hoeveel rijen (planken) elke kant heeft,
+ * 1. een naam,
+ * 2. hoeveel rijen (planken),
  * 3. hoeveel producten er op elke rij naast elkaar staan.
  *
- * Een kant met 0 rijen bestaat niet: zo maak je een stelling tegen de
- * muur, met maar één kant.
+ * Hoeveel kanten er zijn hangt af van de dikte. Eén hokje dik is één
+ * kant met één naam. Twee hokjes dik is een linker- en rechterkant (of
+ * boven en onder bij een liggende stelling), elk met een eigen naam.
  */
 export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }: Props) {
   const labels = kantLabels(vlak);
-  const [links, setLinks] = useState<Kant>(begin?.links ?? { naam: "", rijen: [] });
-  const [rechts, setRechts] = useState<Kant>(begin?.rechts ?? { naam: "", rijen: [] });
+  const eenKant = labels.rechts === null;
+
+  const [links, setLinks] = useState<Kant>(begin?.links ?? nieuweKant());
+  const [rechts, setRechts] = useState<Kant>(begin?.rechts ?? nieuweKant());
   const [fout, setFout] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
   const [zekerWeten, setZekerWeten] = useState(false);
@@ -41,8 +45,8 @@ export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }:
   if (alleenLezen) {
     return (
       <div className="space-y-5">
-        <Overzicht label={labels.links} kant={begin?.links ?? null} />
-        <Overzicht label={labels.rechts} kant={begin?.rechts ?? null} />
+        <Overzicht label={eenKant ? null : labels.links} kant={begin?.links ?? null} />
+        {!eenKant && <Overzicht label={labels.rechts} kant={begin?.rechts ?? null} />}
       </div>
     );
   }
@@ -53,14 +57,16 @@ export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }:
 
     // Dezelfde controle als de server, maar dan meteen, zonder heen
     // en weer. De server controleert het daarna toch nog een keer.
-    const zonderNaam = [
-      links.rijen.length > 0 && !links.naam.trim() && labels.links.toLowerCase(),
-      rechts.rijen.length > 0 && !rechts.naam.trim() && labels.rechts.toLowerCase(),
-    ].filter(Boolean);
-    if (links.rijen.length === 0 && rechts.rijen.length === 0) {
-      setFout("Geef minstens één kant een rij.");
+    if (eenKant && !links.naam.trim()) {
+      setFout("Geef de stelling een naam.");
       return;
     }
+    const zonderNaam = eenKant
+      ? []
+      : [
+          !links.naam.trim() && labels.links.toLowerCase(),
+          !rechts.naam.trim() && labels.rechts?.toLowerCase(),
+        ].filter(Boolean);
     if (zonderNaam.length > 0) {
       setFout(`Geef de ${zonderNaam.join(" en de ")} een naam.`);
       return;
@@ -68,10 +74,7 @@ export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }:
 
     setBezig(true);
     try {
-      await bewaar?.({
-        links: links.rijen.length > 0 ? links : null,
-        rechts: rechts.rijen.length > 0 ? rechts : null,
-      });
+      await bewaar?.({ links, rechts: eenKant ? null : rechts });
     } catch (probleem) {
       setFout(meldingVan(probleem, "Opslaan is niet gelukt."));
       setBezig(false);
@@ -94,10 +97,26 @@ export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }:
     <form onSubmit={opslaan} className="space-y-6" noValidate>
       {fout && <Melding tekst={fout} />}
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <KantVelden label={labels.links} kant={links} zet={setLinks} />
-        <KantVelden label={labels.rechts} kant={rechts} zet={setRechts} />
-      </div>
+      {eenKant ? (
+        <KantVelden kant={links} zet={setLinks} naamLabel="Naam" voorbeeld="Dranken" />
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2">
+          <KantVelden
+            titel={labels.links}
+            kant={links}
+            zet={setLinks}
+            naamLabel={`Naam van de ${labels.links.toLowerCase()}`}
+            voorbeeld="Koek en snoep"
+          />
+          <KantVelden
+            titel={labels.rechts ?? ""}
+            kant={rechts}
+            zet={setRechts}
+            naamLabel={`Naam van de ${labels.rechts?.toLowerCase()}`}
+            voorbeeld="Chips"
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-2 border-t border-black-forest/10 pt-5 sm:flex-row-reverse">
         <div className="sm:w-48">
@@ -138,83 +157,89 @@ export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }:
   );
 }
 
-function KantVelden({ label, kant, zet }: { label: string; kant: Kant; zet: (kant: Kant) => void }) {
+type KantProps = {
+  /** Kop boven het blok. Weglaten bij een stelling met maar één kant. */
+  titel?: string;
+  kant: Kant;
+  zet: (kant: Kant) => void;
+  naamLabel: string;
+  voorbeeld: string;
+};
+
+function KantVelden({ titel, kant, zet, naamLabel, voorbeeld }: KantProps) {
   function zetAantalRijen(aantal: number) {
     const rijen = kant.rijen.slice(0, aantal);
+    // Een nieuwe rij krijgt evenveel producten als de rij erboven.
     while (rijen.length < aantal) rijen.push(rijen.at(-1) ?? STANDAARD_PLEKKEN);
     zet({ ...kant, rijen });
   }
 
-  return (
-    <fieldset className="space-y-4 rounded-2xl border border-black-forest/10 p-4">
-      <legend className="px-1 text-sm font-bold">{label}</legend>
-
+  const velden = (
+    <>
       <Veld
-        label={`Naam van de ${label.toLowerCase()}`}
+        label={naamLabel}
         waarde={kant.naam}
         zet={(naam) => zet({ ...kant, naam })}
-        vereist={kant.rijen.length > 0}
-        placeholder={label === "Linkerkant" || label === "Bovenkant" ? "Koek en snoep" : "Chips"}
+        placeholder={voorbeeld}
       />
 
       <Teller
         label="Hoeveel rijen?"
         waarde={kant.rijen.length}
         zet={zetAantalRijen}
-        min={0}
+        min={1}
         max={MAX_RIJEN_PER_KANT}
       />
 
-      {kant.rijen.length === 0 ? (
-        <p className="text-sm text-black-forest/60">
-          Geen rijen: deze kant staat tegen de muur en telt niet mee.
-        </p>
-      ) : (
-        <div>
-          <p className="text-sm font-semibold">Hoeveel producten per rij?</p>
-          <p className="text-xs text-black-forest/60">Rij 1 is de bovenste plank.</p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {kant.rijen.map((aantal, i) => (
-              <Teller
-                key={i}
-                klein
-                label={`Rij ${i + 1}`}
-                waarde={aantal}
-                zet={(nieuw) =>
-                  zet({ ...kant, rijen: kant.rijen.map((oud, j) => (j === i ? nieuw : oud)) })
-                }
-                min={1}
-                max={MAX_VAKKEN_PER_RIJ}
-              />
-            ))}
-          </div>
+      <div>
+        <p className="text-sm font-semibold">Hoeveel producten per rij?</p>
+        <p className="text-xs text-black-forest/60">Rij 1 is de bovenste plank.</p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {kant.rijen.map((aantal, i) => (
+            <Teller
+              key={i}
+              klein
+              label={`Rij ${i + 1}`}
+              waarde={aantal}
+              zet={(nieuw) =>
+                zet({ ...kant, rijen: kant.rijen.map((oud, j) => (j === i ? nieuw : oud)) })
+              }
+              min={1}
+              max={MAX_VAKKEN_PER_RIJ}
+            />
+          ))}
         </div>
-      )}
+      </div>
+    </>
+  );
+
+  if (!titel) return <div className="space-y-4">{velden}</div>;
+
+  return (
+    <fieldset className="space-y-4 rounded-2xl border border-black-forest/10 p-4">
+      <legend className="px-1 text-sm font-bold">{titel}</legend>
+      {velden}
     </fieldset>
   );
 }
 
-function Overzicht({ label, kant }: { label: string; kant: Kant | null }) {
+function Overzicht({ label, kant }: { label: string | null; kant: Kant | null }) {
+  if (!kant) return null;
+
   return (
     <section>
-      <h3 className="text-sm font-bold text-black-forest/60">{label}</h3>
-      {kant ? (
-        <>
-          <p className="mt-1 text-lg font-extrabold">{kant.naam}</p>
-          <ul className="mt-2 space-y-1 text-sm">
-            {kant.rijen.map((aantal, i) => (
-              <li key={i} className="flex justify-between border-b border-black-forest/10 py-1">
-                <span>Rij {i + 1}</span>
-                <span data-getal>
-                  {aantal} {aantal === 1 ? "product" : "producten"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : (
-        <p className="mt-1 text-sm text-black-forest/60">Geen; deze kant staat tegen de muur.</p>
-      )}
+      {label && <h3 className="text-sm font-bold text-black-forest/60">{label}</h3>}
+      {label && <p className="mt-1 text-lg font-extrabold">{kant.naam}</p>}
+      <ul className="mt-2 space-y-1 text-sm">
+        {kant.rijen.map((aantal, i) => (
+          <li key={i} className="flex justify-between border-b border-black-forest/10 py-1">
+            <span>Rij {i + 1}</span>
+            <span data-getal>
+              {aantal} {aantal === 1 ? "product" : "producten"}
+            </span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

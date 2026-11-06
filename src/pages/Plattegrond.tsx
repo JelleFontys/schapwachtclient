@@ -12,7 +12,7 @@ import { StellingVenster } from "../components/plattegrond/StellingVenster";
 import { Vloer } from "../components/plattegrond/Vloer";
 import { useSessie } from "../auth/authContext";
 import { meldingVan } from "../data/api";
-import { kort, plattegronden, stellingen, stellingNaam } from "../data/plattegronden";
+import { dikte, kort, plattegronden, stellingen, stellingNaam } from "../data/plattegronden";
 import type {
   Plattegrond,
   PlattegrondKort,
@@ -205,7 +205,7 @@ export default function PlattegrondPagina() {
                 </p>
                 <p className="mt-3 max-w-prose text-sm leading-relaxed text-black-forest/75">
                   {magBeheren
-                    ? "Tik op twee hoeken om een stelling neer te zetten. Tik op een stelling om hem in te richten. Met de plusjes maak je de vloer groter."
+                    ? "Tik op twee hoeken om een stelling neer te zetten: 1 hokje dik voor één kant, 2 dik voor een linker- en rechterkant. Tik op een stelling om hem in te richten. Met de plusjes maak je de vloer groter."
                     : "Tik op een stelling om te zien hoe hij is ingericht."}
                 </p>
 
@@ -244,7 +244,7 @@ export default function PlattegrondPagina() {
         sluit={() => setNieuwVlak(null)}
         titel="Nieuwe stelling"
         onder={nieuwVlak ? beschrijfVlak(nieuwVlak) : undefined}
-        breed
+        breed={nieuwVlak !== null && dikte(nieuwVlak) === 2}
       >
         {nieuwVlak && <StellingVenster vlak={nieuwVlak} alleenLezen={false} bewaar={zetNeer} />}
       </Venster>
@@ -254,7 +254,7 @@ export default function PlattegrondPagina() {
         sluit={() => setGekozen(null)}
         titel={gekozen ? stellingNaam(gekozen) : "Stelling"}
         onder={gekozen ? beschrijfVlak(gekozen) : undefined}
-        breed={magBeheren}
+        breed={magBeheren && gekozen !== null && dikte(gekozen) === 2}
       >
         {gekozen && (
           <StellingVenster

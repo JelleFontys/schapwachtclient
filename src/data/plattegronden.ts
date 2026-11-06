@@ -3,6 +3,8 @@ import { haalOp, verstuur, verwijder, wijzig } from "./api";
 /** Zelfde grenzen als de server (kern/raster.js en kern/stelling.js). */
 export const MAX_RIJEN_PER_KANT = 12;
 export const MAX_VAKKEN_PER_RIJ = 30;
+/** Een stelling is 1 hokje dik (één kant) of 2 (twee kanten). */
+export const MAX_DIKTE = 2;
 
 /** Een rechthoek op de vloer. x en y zijn de linkerbovenhoek, vanaf 1. */
 export type Vlak = { x: number; y: number; breedte: number; hoogte: number };
@@ -30,16 +32,47 @@ export const kort = ({ id, naam, rijen, kolommen }: PlattegrondKort): Plattegron
   kolommen,
 });
 
+/** De dikte is de korte kant van de rechthoek. */
+export function dikte(vlak: Pick<Vlak, "breedte" | "hoogte">) {
+  return Math.min(vlak.breedte, vlak.hoogte);
+}
+
 /**
- * Hoe de kanten heten. Bij een staande stelling (hoger dan breed) is dat
- * links en rechts, bij een liggende boven en onder. Zelfde regel als de
- * server, zodat een foutmelding dezelfde woorden gebruikt als het
- * formulier.
+ * Hoe de kanten heten. Zelfde regel als de server, zodat een
+ * foutmelding dezelfde woorden gebruikt als het formulier.
+ *
+ * - 1 dik: één kant, die gewoon "Stelling" heet (rechts is null).
+ * - 2 dik en staand: Linkerkant en Rechterkant.
+ * - 2 dik en liggend: Bovenkant en Onderkant.
  */
-export function kantLabels(vlak: Pick<Vlak, "breedte" | "hoogte">) {
+export function kantLabels(vlak: Pick<Vlak, "breedte" | "hoogte">): {
+  links: string;
+  rechts: string | null;
+} {
+  if (dikte(vlak) === 1) return { links: "Stelling", rechts: null };
   return vlak.hoogte >= vlak.breedte
     ? { links: "Linkerkant", rechts: "Rechterkant" }
     : { links: "Bovenkant", rechts: "Onderkant" };
+}
+
+/**
+ * Waarom hier geen stelling kan, of null als het wel kan. `kort` past
+ * in het rode vlak op de vloer, `lang` staat eronder als uitleg.
+ */
+export function waaromNiet(vlak: Vlak, stellingen: Vlak[]) {
+  if (stellingen.some((s) => overlappen(vlak, s))) {
+    return {
+      kort: "Bezet",
+      lang: "Een stelling mag niet over een andere heen. Kies opnieuw.",
+    };
+  }
+  if (dikte(vlak) > MAX_DIKTE) {
+    return {
+      kort: `Max. ${MAX_DIKTE} dik`,
+      lang: `Een stelling mag maximaal ${MAX_DIKTE} hokjes dik zijn. Kies opnieuw.`,
+    };
+  }
+  return null;
 }
 
 /** Twee aangetikte hoeken, in welke volgorde ook, als rechthoek. */
