@@ -9,14 +9,12 @@ import type { Productgroep, ProductInvoer } from "../../data/producten";
 
 type Props = {
   begin?: ProductInvoer;
-  /** Na het scannen staat de barcode vast (SW-38). */
   barcodeVast?: boolean;
   knoptekst: string;
   bewaar: (invoer: ProductInvoer) => Promise<void>;
   annuleer?: () => void;
 };
 
-/** Naam, barcode en productgroep van een product (SW-25, SW-38). */
 export function ProductFormulier({ begin, barcodeVast = false, knoptekst, bewaar, annuleer }: Props) {
   const groepId = useId();
   const [naam, setNaam] = useState(begin?.naam ?? "");
@@ -37,7 +35,6 @@ export function ProductFormulier({ begin, barcodeVast = false, knoptekst, bewaar
         setStandaard(g.standaardAfprijsDagen);
       })
       .catch(() => {
-        // Zonder groepen kan het product nog steeds worden aangemaakt.
       });
     return () => {
       afgebroken = true;

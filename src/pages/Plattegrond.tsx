@@ -25,13 +25,6 @@ import type {
 
 type Open = "nieuw" | "hernoem" | null;
 
-/**
- * De plattegrond: de vloer van bovenaf met de stellingen erop.
- *
- * Het id staat in de URL (/plattegrond/:id). Zo kun je een link naar
- * het magazijn delen, en blijft de keuze staan als je de pagina
- * herlaadt. Zonder id gaat de pagina door naar de eerste.
- */
 export default function PlattegrondPagina() {
   const { id } = useParams();
   const navigeer = useNavigate();
@@ -78,8 +71,6 @@ export default function PlattegrondPagina() {
     };
   }, [id]);
 
-  // Wat er nu getoond wordt hoort bij het id in de URL. Bij wisselen
-  // staat even de vorige nog in `detail`; die tonen we dan niet.
   const huidig = detail && detail.id === id ? detail : null;
   const fout = detailFout && detailFout.id === id ? detailFout.tekst : null;
 
@@ -122,7 +113,6 @@ export default function PlattegrondPagina() {
     setNieuwVlak(null);
   }
 
-  // Geen id in de URL: door naar de eerste plattegrond.
   if (!id && lijst && lijst.length > 0) {
     return <Navigate to={`/plattegrond/${lijst[0].id}`} replace />;
   }

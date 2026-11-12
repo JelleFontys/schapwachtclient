@@ -11,7 +11,6 @@ const tekst: Record<Verbinding, string> = {
   fout: "Geen verbinding met de API",
 };
 
-/** Laat zien of de API en de database bereikbaar zijn. */
 export function ApiStatus() {
   const [verbinding, setVerbinding] = useState<Verbinding>("laden");
   const [database, setDatabase] = useState<string | null>(null);

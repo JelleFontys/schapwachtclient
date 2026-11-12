@@ -8,12 +8,6 @@ import { Melding } from "../components/Melding";
 import { Veld } from "../components/Veld";
 import { useSessie } from "../auth/authContext";
 
-/**
- * Een account hoort altijd bij een winkel. Daarom is de eerste keuze
- * op deze pagina niet een veld maar een richting: begin je een nieuwe
- * winkel, of sluit je je aan bij een bestaande? Dat bepaalt ook je rol,
- * en dat staat er daarom bij.
- */
 type Keuze = "nieuw" | "aansluiten";
 
 export default function Registreren() {
@@ -149,8 +143,6 @@ function KeuzeKnop({
     <button
       type="button"
       onClick={kies}
-      // aria-pressed: hiermee hoort een schermlezer welke van de twee
-      // aan staat. Een dikkere rand alleen is niet genoeg.
       aria-pressed={actief}
       className={`rounded-xl border px-3.5 py-3 text-left transition-colors ${
         actief

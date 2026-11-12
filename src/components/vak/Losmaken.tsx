@@ -2,12 +2,6 @@ import { TriangleAlert } from "lucide-react";
 
 import type { Geraakt } from "../../data/plattegronden";
 
-/**
- * SW-23: als een wijziging producten hun plek laat kwijtraken, eerst
- * laten zien welke. De producten worden losgemaakt, niet weggegooid: ze
- * komen in de werklijst onder "zonder plek" en kunnen opnieuw geplaatst
- * worden.
- */
 export function Losmaken({
   geraakt,
   doorgaan,

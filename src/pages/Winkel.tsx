@@ -37,8 +37,6 @@ export default function Winkel() {
         }
       });
 
-    // De medewerkerslijst is alleen voor de leidinggevende. De API
-    // weigert hem anders ook, dus hier niet eens vragen.
     if (isLeiding) {
       team
         .lijst()
@@ -46,7 +44,6 @@ export default function Winkel() {
           if (!afgebroken) setMedewerkers(lijst);
         })
         .catch(() => {
-          // Niet erg genoeg voor een melding over de hele pagina.
         });
     }
 
@@ -63,8 +60,7 @@ export default function Winkel() {
       setGekopieerd(true);
       setTimeout(() => setGekopieerd(false), 2000);
     } catch {
-      // Zonder toestemming voor het klembord kan de code altijd nog
-      // met de hand overgetypt worden; hij staat op het scherm.
+      // kopiëren mag mislukken
     }
   }
 
@@ -143,7 +139,6 @@ export default function Winkel() {
                         try {
                           const nieuw = await team.wijzigRol(medewerker.id, e.target.value as Rol);
                           setMedewerkers((oud) => oud.map((m) => (m.id === nieuw.id ? nieuw : m)));
-                          // Je eigen rol veranderd: dan ook de rest van de app bijwerken.
                           if (nieuw.id === gebruiker?.id) await ververs();
                         } catch (p) {
                           setRolFout(meldingVan(p));

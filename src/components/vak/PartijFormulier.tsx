@@ -12,22 +12,11 @@ import type { Product } from "../../data/producten";
 export type NieuwePartij = { product: Product; houdbaarTot: string; aantal: number | null };
 
 type Props = {
-  /** Na het scannen ligt het product al vast. */
   product?: Product;
   knoptekst?: string;
   bewaar: (partij: NieuwePartij) => Promise<void>;
 };
 
-/**
- * Een product met houdbaarheidsdatum toevoegen (SW-26): product, datum,
- * en een aantal als je dat weet.
- *
- * Het product kiezen staat buiten het <form>: daarin kan een nieuw
- * product worden aangemaakt, en dat is zelf een formulier. Een
- * formulier in een formulier mag niet in HTML; de browser negeert dan
- * het binnenste, en de knop "Toevoegen" zou het verkeerde formulier
- * versturen.
- */
 export function PartijFormulier({ product: vast, knoptekst = "Toevoegen", bewaar }: Props) {
   const datumId = useId();
   const [product, setProduct] = useState<Product | null>(vast ?? null);
@@ -45,9 +34,6 @@ export function PartijFormulier({ product: vast, knoptekst = "Toevoegen", bewaar
 
     if (!product) return setFout("Kies eerst een product.");
     if (!datum) return setFout("Vul de houdbaarheidsdatum in.");
-    // Een datum in het verleden kan kloppen (dan ligt er iets over de
-    // datum en moet het juist rood worden), maar vaker is het een
-    // tikfout in het jaar. Daarom één keer vragen of het echt zo is.
     if (inHetVerleden && !verledenBevestigd) return setVerledenBevestigd(true);
 
     const getal = aantal.trim() === "" ? null : Number(aantal);

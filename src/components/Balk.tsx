@@ -11,21 +11,10 @@ const ITEMS: Item[] = [
   { naar: "/werklijst", label: "Werklijst", icoon: ListChecks },
   { naar: "/scannen", label: "Scannen", icoon: ScanBarcode },
   { naar: "/producten", label: "Producten", icoon: Package },
-  // "Team" en niet "Winkel": de eerste plattegrond heet meestal Winkel,
-  // en dan staan er twee links met dezelfde tekst op de pagina.
   { naar: "/winkel", label: "Team", icoon: Users },
   { naar: "/overzicht", label: "Weggegooid", icoon: BarChart3, alleenLeiding: true },
 ];
 
-/**
- * De navigatie op elke pagina waarop je ingelogd bent.
- *
- * Op een breed scherm een balk bovenaan. Op een telefoon een tabbalk
- * onderin: zes links passen daar niet naast elkaar bovenin, en onderin
- * zitten ze waar je duim is. Het overzicht van weggegooide producten
- * staat op de telefoon niet in de tabbalk maar op de teampagina, want
- * dat is iets voor achter een bureau.
- */
 export function Balk() {
   const { gebruiker, logUit } = useSessie();
   const isLeiding = gebruiker?.rol === "LEIDINGGEVENDE";

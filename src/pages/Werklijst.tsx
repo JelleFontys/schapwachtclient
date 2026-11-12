@@ -15,13 +15,6 @@ import type { Partij } from "../data/partijen";
 
 type Filter = "alles" | "actie" | "zonder";
 
-/**
- * De werklijst (SW-34): alle actieve producten met vak en datum, kortst
- * houdbaar bovenaan. Hier meld je ook af (SW-35) en zet je producten
- * zonder plek terug in een vak (SW-24).
- *
- * "Actie nodig" is de lijst voor 's ochtends: alleen oranje en rood.
- */
 export default function Werklijst() {
   const [gegevens, setGegevens] = useState<{ vandaag: string; partijen: Partij[] } | null>(null);
   const [fout, setFout] = useState<string | null>(null);

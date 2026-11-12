@@ -1,11 +1,3 @@
-/**
- * Alle verzoeken aan de API lopen hierlangs.
- *
- * Lokaal is VITE_API_URL leeg en blijft het pad relatief; de
- * ontwikkelserver stuurt /api dan door naar de Express-server, zodat de
- * browser alles als dezelfde herkomst ziet. In productie staan client en
- * API op verschillende subdomeinen en wordt het volledige adres gebruikt.
- */
 import { leesToken } from "./sessie";
 
 const basisUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
@@ -14,13 +6,8 @@ export function apiUrl(pad: string) {
   return `${basisUrl}${pad}`;
 }
 
-/**
- * Fout met de status erbij, zodat een pagina kan zien of iemand niet
- * meer ingelogd is (401) of dat de invoer niet klopte (400).
- */
 export class ApiFout extends Error {
   readonly status: number;
-  /** Alles wat de server naast de melding meestuurde. */
   readonly gegevens: Record<string, unknown>;
 
   constructor(status: number, bericht: string, gegevens: Record<string, unknown> = {}) {
@@ -31,7 +18,6 @@ export class ApiFout extends Error {
   }
 }
 
-/** Een melding die je aan de gebruiker kunt laten zien, wat er ook misging. */
 export function meldingVan(fout: unknown, standaard = "Er ging iets mis.") {
   return fout instanceof Error && fout.message ? fout.message : standaard;
 }
@@ -50,9 +36,6 @@ async function stuur<T>(pad: string, opties: RequestInit): Promise<T> {
 
   if (response.status === 204) return undefined as T;
 
-  // Een foutmelding van de server staat in het veld `fout`. Komt er
-  // geen JSON terug (een 502 van de proxy bijvoorbeeld), dan maken we
-  // er zelf een leesbare melding van.
   let inhoud: unknown;
   try {
     inhoud = await response.json();

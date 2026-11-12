@@ -13,11 +13,6 @@ type Props = {
   max?: number;
 };
 
-/**
- * Invoerveld met een label dat er echt aan vastzit. Het id komt uit
- * useId, zodat twee velden met hetzelfde label elkaar niet in de weg
- * zitten en een schermlezer altijd het juiste label voorleest.
- */
 export function Veld({
   label,
   type = "text",
@@ -55,8 +50,6 @@ export function Veld({
         placeholder={placeholder}
         min={min}
         max={max}
-        // Op een telefoon het cijfertoetsenbord in plaats van het hele
-        // toetsenbord met een cijferrij erboven.
         inputMode={type === "number" ? "numeric" : undefined}
         aria-describedby={uitleg ? uitlegId : undefined}
         className="mt-2 w-full rounded-xl border border-black-forest/15 bg-white/60 px-3.5 py-2.5

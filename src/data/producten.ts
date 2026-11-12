@@ -13,13 +13,11 @@ export type Product = {
   naam: string;
   barcode: string | null;
   productgroep: { id: string; naam: string } | null;
-  /** De afprijsregel die voor dit product geldt (groep of standaard). */
   afprijsDagen: number;
 };
 
 export type ProductInvoer = { naam: string; barcode: string; productgroepId: string | null };
 
-/** Waar een product ligt: het antwoord op "waar hoort dit?" na het scannen. */
 export type Plek = {
   vakId: string;
   plattegrondId: string;

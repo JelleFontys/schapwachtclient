@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-/** Het kader om de inlog- en registratiepagina. */
 export function Kader({
   titel,
   uitleg,

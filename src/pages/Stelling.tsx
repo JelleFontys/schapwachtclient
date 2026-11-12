@@ -18,15 +18,6 @@ import type { InhoudKant, InhoudVak, StellingInhoud } from "../data/plattegronde
 import { leegVlak, statusOpmaak } from "../data/statussen";
 import { ernstigste } from "../data/ernstigste";
 
-/**
- * Een stelling opengeklapt (SW-27): per kant alle rijen van boven naar
- * beneden, met in elk vak het product en de datum. Tik op een vak om te
- * zien wat erin ligt, iets toe te voegen of af te melden.
- *
- * Een eigen pagina en geen venster: een stelling kan 12 rijen van 30
- * vakken hebben, en op een telefoon wil je daar met de terugknop weer
- * uit kunnen.
- */
 export default function StellingPagina() {
   const { id } = useParams();
   const navigeer = useNavigate();

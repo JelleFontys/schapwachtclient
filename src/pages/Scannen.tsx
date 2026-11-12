@@ -18,15 +18,6 @@ import type { Gescand, Product } from "../data/producten";
 
 type Vak = { id: string; tekst: string };
 
-/**
- * Scannen (SW-36, SW-37, SW-38): barcode scannen of intikken, het
- * product opzoeken, en meteen een datum invullen voor een vak.
- *
- * - Bekend product: je ziet waar het nu ligt, en kiest een van die
- *   plekken of een andere.
- * - Onbekend product: de barcode staat al ingevuld, jij vult de naam en
- *   de productgroep aan, en gaat dan door.
- */
 export default function Scannen() {
   const [gescand, setGescand] = useState<Gescand | null>(null);
   const [zoekt, setZoekt] = useState(false);

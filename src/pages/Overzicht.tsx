@@ -10,10 +10,6 @@ import type { Overzicht as OverzichtGegevens } from "../data/team";
 
 const SNEL = [7, 30, 90];
 
-/**
- * Wat er is weggegooid, per productgroep (SW-39). De vraag erachter: waar
- * gooien we het meeste weg, en moet de afprijsregel daar dan eerder?
- */
 export default function Overzicht() {
   const vanId = useId();
   const totId = useId();

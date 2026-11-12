@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write # alleen wat nodig is om naar de build-branch te pushen
+  contents: write
 
 jobs:
   build:
@@ -18,14 +18,10 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      # --ignore-scripts: install-scripts van packages draaien niet mee.
-      # Faalt de build daardoor, haal dan alleen deze vlag weg.
       - run: npm ci --ignore-scripts
       - run: npm run lint
       - run: npm run build
         env:
-          # Vite bakt het API-adres in tijdens het bouwen, dus het moet
-          # hier al bekend zijn. In de build-branch staat het er vast in.
           VITE_API_URL: https://schapserv.web4ever.nl
       - uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
         with:
@@ -33,9 +29,6 @@ jobs:
           publish_dir: ./dist
           publish_branch: build
 
-      # SW-41: na een geslaagde build de statische site laten uitrollen.
-      # Staan de secrets er nog niet, dan wordt dit overgeslagen met een
-      # waarschuwing in plaats van dat de hele pipeline rood wordt.
       - name: Dokploy laten uitrollen
         env:
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}

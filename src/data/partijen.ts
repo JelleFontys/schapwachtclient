@@ -8,13 +8,11 @@ export type Partij = {
   houdbaarTot: string;
   aantal: number | null;
   status: Status;
-  /** null = zonder plek; ontbreekt als de partij al bij een vak getoond wordt. */
   plek?: Plek | null;
 };
 
 export type Uitkomst = "GESTICKERD" | "UITVERKOCHT" | "WEGGEGOOID";
 
-/** De drie manieren waarop een partij van de werklijst verdwijnt (SW-28). */
 export const uitkomsten: { waarde: Uitkomst; label: string; uitleg: string }[] = [
   { waarde: "GESTICKERD", label: "Gestickerd", uitleg: "afgeprijsd, ligt nog in het schap" },
   { waarde: "UITVERKOCHT", label: "Uitverkocht", uitleg: "niets meer van deze datum" },

@@ -7,18 +7,9 @@ type Props = {
   zet: (waarde: number) => void;
   min: number;
   max: number;
-  /** Kleiner label, voor een rij tellers naast elkaar. */
   klein?: boolean;
 };
 
-/**
- * Een getal met een min- en een plusknop, zoals de pijltjes op de schets.
- *
- * Intikken mag ook. Zolang je typt staat je eigen tekst in het veld,
- * ook als die nog niet klopt (een leeg veld, of "1" op weg naar "12");
- * alleen een geldig getal wordt doorgegeven. Zonder dat zou je een
- * cijfer niet kunnen weghalen om een ander te typen.
- */
 export function Teller({ label, waarde, zet, min, max, klein = false }: Props) {
   const id = useId();
   const [getypt, setGetypt] = useState<string | null>(null);

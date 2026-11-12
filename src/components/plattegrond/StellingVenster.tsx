@@ -12,15 +12,12 @@ import type { Geraakt, Kant, StellingInvoer, Vlak } from "../../data/plattegrond
 
 type Props = {
   vlak: Vlak;
-  /** Bij een bestaande stelling: hoe hij nu is ingericht. */
   begin?: StellingInvoer;
   alleenLezen: boolean;
-  /** `losmaken` is true nadat iemand bevestigd heeft dat producten hun plek kwijt mogen raken. */
   bewaar?: (invoer: StellingInvoer, losmaken: boolean) => Promise<void>;
   verwijder?: (losmaken: boolean) => Promise<void>;
 };
 
-/** Haalt uit een 409 de lijst met producten die hun plek zouden kwijtraken. */
 function geraaktUit(probleem: unknown): Geraakt[] | null {
   if (probleem instanceof ApiFout && probleem.status === 409 && Array.isArray(probleem.gegevens.geraakt)) {
     return probleem.gegevens.geraakt as Geraakt[];
@@ -28,20 +25,9 @@ function geraaktUit(probleem: unknown): Geraakt[] | null {
   return null;
 }
 
-/** Een nieuwe kant begint met één rij van zoveel producten. */
 const STANDAARD_PLEKKEN = 4;
 const nieuweKant = (): Kant => ({ naam: "", rijen: [STANDAARD_PLEKKEN] });
 
-/**
- * Een stelling inrichten, in de drie stappen van de schets:
- * 1. een naam,
- * 2. hoeveel rijen (planken),
- * 3. hoeveel producten er op elke rij naast elkaar staan.
- *
- * Hoeveel kanten er zijn hangt af van de dikte. Eén hokje dik is één
- * kant met één naam. Twee hokjes dik is een linker- en rechterkant (of
- * boven en onder bij een liggende stelling), elk met een eigen naam.
- */
 export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }: Props) {
   const labels = kantLabels(vlak);
   const eenKant = labels.rechts === null;
@@ -68,8 +54,6 @@ export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }:
     event.preventDefault();
     setFout(null);
 
-    // Dezelfde controle als de server, maar dan meteen, zonder heen
-    // en weer. De server controleert het daarna toch nog een keer.
     if (eenKant && !links.naam.trim()) {
       setFout("Geef de stelling een naam.");
       return;
@@ -103,11 +87,6 @@ export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }:
     setZekerWeten(false);
   }
 
-  /**
-   * Eerst zonder losmaken. Zegt de server dat er producten hun plek
-   * kwijtraken (409), dan tonen we welke, en pas na "Doorgaan" gaat het
-   * nog een keer, nu met losmaken.
-   */
   async function probeer(
     gewoon: () => Promise<void> | undefined,
     metLosmaken: () => Promise<void> | undefined,
@@ -215,7 +194,6 @@ export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }:
 }
 
 type KantProps = {
-  /** Kop boven het blok. Weglaten bij een stelling met maar één kant. */
   titel?: string;
   kant: Kant;
   zet: (kant: Kant) => void;
@@ -226,7 +204,6 @@ type KantProps = {
 function KantVelden({ titel, kant, zet, naamLabel, voorbeeld }: KantProps) {
   function zetAantalRijen(aantal: number) {
     const rijen = kant.rijen.slice(0, aantal);
-    // Een nieuwe rij krijgt evenveel producten als de rij erboven.
     while (rijen.length < aantal) rijen.push(rijen.at(-1) ?? STANDAARD_PLEKKEN);
     zet({ ...kant, rijen });
   }

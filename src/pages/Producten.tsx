@@ -15,11 +15,6 @@ import type { Product, Productgroep } from "../data/producten";
 
 type Tab = "producten" | "groepen";
 
-/**
- * Het assortiment (SW-25) en de afprijsregels per productgroep (SW-30).
- * Producten toevoegen en aanpassen mag iedereen; de afprijsregels zijn
- * van de leidinggevende (SW-40).
- */
 export default function Producten() {
   const [tab, setTab] = useState<Tab>("producten");
 

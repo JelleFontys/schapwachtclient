@@ -14,15 +14,9 @@ import type { InhoudVak } from "../../data/plattegronden";
 
 type Props = {
   vak: InhoudVak;
-  /** Na elke wijziging: de stelling opnieuw ophalen. */
   veranderd: () => Promise<void>;
 };
 
-/**
- * Eén vak: wat erin ligt, vroegste datum bovenaan, en wat je ermee kunt
- * doen. Product toevoegen (SW-26), afmelden (SW-28), alles in één keer
- * leegmelden (SW-29).
- */
 export function VakVenster({ vak, veranderd }: Props) {
   const [afmelden, setAfmelden] = useState<string | null>(null);
   const [leeg, setLeeg] = useState(false);

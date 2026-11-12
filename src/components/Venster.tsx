@@ -6,22 +6,11 @@ type Props = {
   open: boolean;
   sluit: () => void;
   titel: string;
-  /** Een tweede regel onder de titel. */
   onder?: string;
-  /** Breder venster, voor een formulier met twee kolommen. */
   breed?: boolean;
   children: ReactNode;
 };
 
-/**
- * Een venster boven de pagina.
- *
- * Gebouwd op het <dialog>-element van de browser zelf. Dat houdt de
- * focus binnen het venster, sluit met Escape en maakt de rest van de
- * pagina onbereikbaar zolang het open is. Dat zelf nabouwen kost veel
- * code en gaat bijna altijd ergens mis voor iemand met een
- * toetsenbord of schermlezer.
- */
 export function Venster({ open, sluit, titel, onder, breed = false, children }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const titelId = useId();
@@ -39,8 +28,6 @@ export function Venster({ open, sluit, titel, onder, breed = false, children }: 
       ref={ref}
       aria-labelledby={titelId}
       onClose={sluit}
-      // Klik op de donkere achtergrond: dan is het doel het venster
-      // zelf en niet iets erin.
       onClick={(event) => {
         if (event.target === ref.current) sluit();
       }}

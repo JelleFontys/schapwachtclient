@@ -11,10 +11,6 @@ type Props = {
   bewaar: (naam: string) => Promise<void>;
 };
 
-/**
- * Alleen een naam. Een nieuwe plattegrond begint als lege vloer van
- * standaardgrootte; de afmetingen regel je daarna met de plusjes.
- */
 export function NaamFormulier({ begin = "", knoptekst, bewaar }: Props) {
   const [naam, setNaam] = useState(begin);
   const [fout, setFout] = useState<string | null>(null);

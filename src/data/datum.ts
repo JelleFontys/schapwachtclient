@@ -1,12 +1,5 @@
-/**
- * Datums tonen. Alles is "jjjj-mm-dd" zonder tijd, zoals de server het
- * stuurt; rekenen gebeurt in UTC zodat zomer- en wintertijd geen dag
- * laten verspringen.
- */
-
 const TIJDZONE = "Europe/Amsterdam";
 
-/** Vandaag in Nederland, als "jjjj-mm-dd". De werklijst krijgt dit van de server. */
 export function vandaag() {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: TIJDZONE,
@@ -42,12 +35,9 @@ const langNotatie = new Intl.DateTimeFormat("nl-NL", {
   timeZone: "UTC",
 });
 
-/** "12 nov." */
 export const kortDatum = (datum: string) => kortNotatie.format(alsUtc(datum));
-/** "do 12 november 2026" */
 export const langDatum = (datum: string) => langNotatie.format(alsUtc(datum));
 
-/** "vandaag", "nog 3 dagen", "2 dagen over de datum". */
 export function hoeLang(houdbaarTot: string, opDatum = vandaag()) {
   const dagen = dagenTussen(opDatum, houdbaarTot);
   if (dagen === 0) return "t/m vandaag";

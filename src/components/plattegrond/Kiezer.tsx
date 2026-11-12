@@ -5,11 +5,9 @@ import type { PlattegrondKort } from "../../data/plattegronden";
 
 type Props = {
   lijst: PlattegrondKort[];
-  /** Alleen meegeven als deze gebruiker plattegronden mag aanmaken. */
   nieuw?: () => void;
 };
 
-/** Wisselen tussen de plattegronden van de winkel (SW-20). */
 export function Kiezer({ lijst, nieuw }: Props) {
   return (
     <nav aria-label="Plattegronden" className="flex flex-wrap items-center gap-2">

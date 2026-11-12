@@ -5,18 +5,9 @@ import { plattegronden, stellingen, stellingNaam } from "../../data/plattegronde
 import type { Plattegrond, PlattegrondKort, StellingInhoud } from "../../data/plattegronden";
 
 type Props = {
-  /** Wordt aangeroepen met het vak-id, of null zolang de keuze niet af is. */
   kies: (vak: { id: string; tekst: string } | null) => void;
 };
 
-/**
- * Een plek kiezen zonder plattegrond: plattegrond, stelling, kant, rij en
- * vak in vijf keuzelijsten. Voor als je een partij zonder plek opnieuw
- * plaatst (SW-24) of na het scannen een andere plek wilt (SW-37).
- *
- * Keuzelijsten en geen tikken op de plattegrond: dit moet ook werken op
- * een telefoon met één hand, en met een schermlezer.
- */
 export function PlekKiezer({ kies }: Props) {
   const ids = { p: useId(), s: useId(), k: useId(), r: useId(), v: useId() };
 

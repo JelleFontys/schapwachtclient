@@ -12,21 +12,8 @@ import Stelling from "./pages/Stelling";
 import Werklijst from "./pages/Werklijst";
 import Winkel from "./pages/Winkel";
 
-/**
- * De scanner wordt pas geladen als iemand hem opent. De bibliotheek die
- * streepjescodes herkent is groter dan de hele rest van de app, en wie
- * alleen de werklijst bekijkt hoeft die niet te downloaden.
- */
 const Scannen = lazy(() => import("./pages/Scannen"));
 
-/**
- * Er is geen startpagina.
- *
- * "/" zit achter VereistInlog en stuurt door naar de plattegrond. Ben
- * je niet ingelogd, dan onderschept VereistInlog dat en kom je op de
- * inlogpagina uit. Zo staat de regel op één plek in plaats van dat
- * elke pagina zelf moet nadenken over wie er binnen mag.
- */
 export default function App() {
   return (
     <BrowserRouter>

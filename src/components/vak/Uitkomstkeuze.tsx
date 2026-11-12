@@ -1,11 +1,6 @@
 import { uitkomsten } from "../../data/partijen";
 import type { Uitkomst } from "../../data/partijen";
 
-/**
- * De drie manieren om iets af te melden (SW-28, SW-35): drie knoppen,
- * geen keuzelijst. Op de vloer, met een doos in je hand, is één tik
- * sneller dan openklappen en kiezen.
- */
 export function Uitkomstkeuze({
   kies,
   bezig,

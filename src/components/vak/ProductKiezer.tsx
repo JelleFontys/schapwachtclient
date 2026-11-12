@@ -11,11 +11,6 @@ type Props = {
   kies: (product: Product | null) => void;
 };
 
-/**
- * Een product kiezen uit het assortiment, of er meteen een toevoegen als
- * het er nog niet in staat. Zoeken kan op naam en op (het begin van) de
- * barcode.
- */
 export function ProductKiezer({ gekozen, kies }: Props) {
   const id = useId();
   const [zoek, setZoek] = useState("");
@@ -26,8 +21,6 @@ export function ProductKiezer({ gekozen, kies }: Props) {
   useEffect(() => {
     if (gekozen) return;
     let afgebroken = false;
-    // Even wachten met zoeken tot iemand stopt met typen, anders gaat er
-    // bij elke letter een verzoek naar de server.
     const wacht = setTimeout(() => {
       producten
         .lijst(zoek.trim())

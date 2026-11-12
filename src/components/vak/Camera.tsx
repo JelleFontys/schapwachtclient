@@ -6,10 +6,6 @@ import { Camera as CameraIcoon, CameraOff } from "lucide-react";
 
 import { Knop } from "../Knop";
 
-/**
- * Alleen de soorten streepjescodes die op levensmiddelen staan. Hoe
- * minder soorten de lezer probeert, hoe sneller hij er een vindt.
- */
 const SOORTEN = [BarcodeFormat.EAN_13, BarcodeFormat.EAN_8, BarcodeFormat.UPC_A, BarcodeFormat.UPC_E];
 
 function uitleg(fout: unknown) {
@@ -20,13 +16,6 @@ function uitleg(fout: unknown) {
   return "De camera start niet. Typ de barcode hieronder.";
 }
 
-/**
- * De camera met barcodeherkenning (SW-36). Stopt na de eerste barcode,
- * zodat één product niet tien keer gescand wordt.
- *
- * De camera gaat pas aan na een tik op de knop. Dan weet je waarom de
- * browser om toestemming vraagt, en Safari op de iPhone wil dat ook.
- */
 export function Camera({ gevonden }: { gevonden: (code: string) => void }) {
   const video = useRef<HTMLVideoElement>(null);
   const [aan, setAan] = useState(false);

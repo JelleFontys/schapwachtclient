@@ -1,9 +1,5 @@
 import { alleStatussen, leegVlak, statusOpmaak } from "../data/statussen";
 
-/**
- * Uitleg van de kleuren (SW-33). Kleur, icoon en woord: wie de kleuren
- * niet ziet, heeft genoeg aan het icoon en het woord.
- */
 export function Legenda() {
   return (
     <aside

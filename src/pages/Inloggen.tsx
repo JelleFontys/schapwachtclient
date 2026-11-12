@@ -12,8 +12,6 @@ export default function Inloggen() {
   const navigeer = useNavigate();
   const plek = useLocation();
 
-  // VereistInlog onthoudt waar je heen wilde toen je nog niet ingelogd
-  // was. Kwam je gewoon binnenlopen, dan is dat de plattegrond.
   const vandaan = (plek.state as { vandaan?: string } | null)?.vandaan;
   const daarna = vandaan && vandaan !== "/" ? vandaan : "/plattegrond";
 

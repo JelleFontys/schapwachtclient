@@ -8,20 +8,8 @@ import type { Gebruiker, NieuwAccount } from "./authContext";
 
 type Antwoord = { gebruiker: Gebruiker; token: string };
 
-/**
- * Houdt bij wie er ingelogd is.
- *
- * Bij het opstarten staat er misschien nog een token in localStorage.
- * Of dat nog geldig is, weet alleen de server: daarom vraagt deze
- * provider eerst /api/auth/ik op. Tot dat antwoord binnen is staat
- * `bezig` op waar, zodat de app niet even een inlogpagina laat zien aan
- * iemand die al ingelogd is.
- */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [gebruiker, setGebruiker] = useState<Gebruiker | null>(null);
-  // Alleen wachten als er iets te controleren is. Zonder token weten we
-  // meteen dat niemand ingelogd is, en dan hoeft de app niet eerst een
-  // laadscherm te laten zien.
   const [bezig, setBezig] = useState(() => leesToken() !== null);
 
   useEffect(() => {
@@ -34,9 +22,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!afgebroken) setGebruiker(antwoord.gebruiker);
       })
       .catch((fout: unknown) => {
-        // Alleen bij 401 het token weggooien. Bij een API die even
-        // onbereikbaar is, is het token nog prima en mag je niet
-        // ongemerkt uitgelogd worden.
         if (fout instanceof ApiFout && fout.status === 401) wisToken();
       })
       .finally(() => {
@@ -71,15 +56,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await verstuur("/api/auth/uitloggen");
     } catch {
-      // Mislukt dat, dan maakt het niet uit: het token weggooien is
-      // wat uitloggen hier betekent.
+      // server niet bereikbaar: lokaal toch uitloggen
     }
     wisToken();
     setGebruiker(null);
   }, []);
 
-  // De rol in het token kan verouderd zijn; de server kijkt bij elk
-  // verzoek in de database. Dit haalt de app bij met wat de server weet.
   const ververs = useCallback(async () => {
     const antwoord = await haalOp<{ gebruiker: Gebruiker }>("/api/auth/ik");
     setGebruiker(antwoord.gebruiker);

@@ -17,31 +17,18 @@ type Punt = { x: number; y: number };
 type Props = {
   plattegrond: Plattegrond;
   magBeheren: boolean;
-  /** Loopt er een verzoek voor een rand? Dan even niet nog een keer. */
   bezig: boolean;
   pasRandAan: (rand: Rand, actie: RandActie) => void;
   kiesVlak: (vlak: Vlak) => void;
   kiesStelling: (stelling: Stelling) => void;
 };
 
-/**
- * De vloer van bovenaf: een raster van hokjes met de stellingen erop,
- * en aan elke kant een plusje om het raster groter te maken.
- *
- * Een stelling zet je neer door twee hoeken aan te tikken. Niet slepen:
- * slepen botst op een telefoon met scrollen, en met een toetsenbord kun
- * je niet slepen. Twee keer tikken werkt met muis, vinger en toetsenbord
- * hetzelfde.
- */
 export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, kiesStelling }: Props) {
   const raster = useRef<HTMLDivElement>(null);
   const [anker, setAnker] = useState<Punt | null>(null);
   const [wijst, setWijst] = useState<Punt | null>(null);
   const [actief, setActief] = useState<Punt>({ x: 1, y: 1 });
   const [melding, setMelding] = useState<{ tekst: string; fout: boolean } | null>(null);
-  // Een selectie die niet mag, blijft rood staan tot de volgende tik.
-  // Op een telefoon is er geen muis die vooraf een voorbeeld laat zien,
-  // dus daar is dit de enige manier om te zien wát er niet mocht.
   const [afgewezen, setAfgewezen] = useState<{ vlak: Vlak; kort: string } | null>(null);
 
   const { rijen, kolommen, stellingen } = plattegrond;
@@ -55,8 +42,6 @@ export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, ki
   const vrij = (p: Punt) =>
     p.x >= 1 && p.y >= 1 && p.x <= kolommen && p.y <= rijen && !bezet.has(`${p.x}:${p.y}`);
 
-  // Welk hokje met Tab bereikbaar is. Is het actieve hokje net bezet
-  // geraakt door een nieuwe stelling, dan het eerste vrije.
   const tabHokje = vrij(actief) ? actief : eersteVrije(rijen, kolommen, vrij);
 
   const voorbeeld = anker && wijst ? tussen(anker, wijst) : null;
@@ -94,15 +79,12 @@ export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, ki
     setMelding(null);
   }
 
-  // Wat er over de vloer heen getekend wordt: het voorbeeld terwijl je
-  // kiest, of de afgewezen selectie nadat je gekozen hebt.
   const overlay = voorbeeld
     ? { vlak: voorbeeld, fout: voorbeeldFout?.kort ?? null }
     : afgewezen
       ? { vlak: afgewezen.vlak, fout: afgewezen.kort }
       : null;
 
-  /** Pijltjestoetsen: naar het volgende vrije hokje in die richting. */
   function toets(event: KeyboardEvent, punt: Punt) {
     const richting = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[
       event.key
@@ -343,8 +325,6 @@ function StellingBlok({ stelling, kies }: { stelling: Stelling; kies: (s: Stelli
     >
       <span className="sr-only">Stelling: </span>
       {kanten.map((kant, i) => {
-        // Elke kant krijgt de kleur van zijn slechtste vak (SW-32), plus
-        // een icoon: kleur alleen is niet genoeg.
         const opmaak = kant.status ? statusOpmaak[kant.status] : null;
         const Icoon = opmaak?.icoon;
         return (
