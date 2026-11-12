@@ -78,9 +78,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setGebruiker(null);
   }, []);
 
+  // De rol in het token kan verouderd zijn; de server kijkt bij elk
+  // verzoek in de database. Dit haalt de app bij met wat de server weet.
+  const ververs = useCallback(async () => {
+    const antwoord = await haalOp<{ gebruiker: Gebruiker }>("/api/auth/ik");
+    setGebruiker(antwoord.gebruiker);
+  }, []);
+
   const waarde = useMemo(
-    () => ({ gebruiker, bezig, logIn, registreer, logUit }),
-    [gebruiker, bezig, logIn, registreer, logUit],
+    () => ({ gebruiker, bezig, logIn, registreer, logUit, ververs }),
+    [gebruiker, bezig, logIn, registreer, logUit, ververs],
   );
 
   return <SessieContext.Provider value={waarde}>{children}</SessieContext.Provider>;

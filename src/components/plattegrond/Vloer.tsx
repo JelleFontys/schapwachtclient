@@ -10,6 +10,7 @@ import {
   waaromNiet,
 } from "../../data/plattegronden";
 import type { Kant, Plattegrond, Rand, RandActie, Stelling, Vlak } from "../../data/plattegronden";
+import { leegVlak, statusOpmaak } from "../../data/statussen";
 
 type Punt = { x: number; y: number };
 
@@ -337,26 +338,35 @@ function StellingBlok({ stelling, kies }: { stelling: Stelling; kies: (s: Stelli
         gridColumn: `${stelling.x} / span ${stelling.breedte}`,
         gridRow: `${stelling.y} / span ${stelling.hoogte}`,
       }}
-      className={`z-10 flex overflow-hidden rounded-sm border-2 border-olive-leaf bg-olive-leaf/15
-                  text-black-forest transition-colors hover:bg-olive-leaf/30
-                  ${staand ? "flex-row" : "flex-col"}`}
+      className={`z-10 flex overflow-hidden rounded-sm border-2 border-black-forest/50
+                  transition-[filter] hover:brightness-95 ${staand ? "flex-row" : "flex-col"}`}
     >
       <span className="sr-only">Stelling: </span>
-      {kanten.map((kant, i) => (
-        <span
-          key={i}
-          className={`flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden
-                      ${i > 0 ? (staand ? "border-l border-olive-leaf/60" : "border-t border-olive-leaf/60") : ""}`}
-        >
+      {kanten.map((kant, i) => {
+        // Elke kant krijgt de kleur van zijn slechtste vak (SW-32), plus
+        // een icoon: kleur alleen is niet genoeg.
+        const opmaak = kant.status ? statusOpmaak[kant.status] : null;
+        const Icoon = opmaak?.icoon;
+        return (
           <span
-            className={`truncate px-0.5 text-[10px] font-semibold leading-tight sm:text-xs
-                        ${staand ? "[writing-mode:vertical-rl]" : ""}`}
+            key={i}
+            className={`flex min-h-0 min-w-0 flex-1 items-center justify-center gap-0.5 overflow-hidden border-0
+                        ${opmaak?.vlak ?? leegVlak}
+                        ${staand ? "flex-col" : "flex-row"}
+                        ${i > 0 ? (staand ? "border-l border-black-forest/30" : "border-t border-black-forest/30") : ""}`}
           >
-            {kant.naam}
-            {i < kanten.length - 1 && <span className="sr-only"> en </span>}
+            {Icoon && <Icoon aria-hidden="true" className="size-3 shrink-0" />}
+            <span
+              className={`truncate px-0.5 text-[10px] font-semibold leading-tight sm:text-xs
+                          ${staand ? "[writing-mode:vertical-rl]" : ""}`}
+            >
+              {kant.naam}
+              {opmaak && <span className="sr-only"> ({opmaak.label.toLowerCase()})</span>}
+              {i < kanten.length - 1 && <span className="sr-only"> en </span>}
+            </span>
           </span>
-        </span>
-      ))}
+        );
+      })}
     </button>
   );
 }

@@ -1,4 +1,6 @@
 import { haalOp, verstuur, verwijder, wijzig } from "./api";
+import type { Partij } from "./partijen";
+import type { Status } from "./statussen";
 
 /** Zelfde grenzen als de server (kern/raster.js en kern/stelling.js). */
 export const MAX_RIJEN_PER_KANT = 12;
@@ -14,7 +16,12 @@ export type Vlak = { x: number; y: number; breedte: number; hoogte: number };
  * producten dat ernaast past: [6, 6, 4] is drie rijen. Rij 1 is de
  * bovenste.
  */
-export type Kant = { naam: string; rijen: number[] };
+export type Kant = {
+  naam: string;
+  rijen: number[];
+  /** Van de server: de ernstigste status op deze kant, null als hij leeg is. */
+  status?: Status | null;
+};
 
 export type Stelling = Vlak & { id: string; links: Kant | null; rechts: Kant | null };
 export type StellingInvoer = { links: Kant | null; rechts: Kant | null };
@@ -23,6 +30,24 @@ export type PlattegrondKort = { id: string; naam: string; rijen: number; kolomme
 export type Plattegrond = PlattegrondKort & { stellingen: Stelling[] };
 
 export type Rand = "boven" | "onder" | "links" | "rechts";
+
+/** Een stelling opengeklapt (SW-27): per kant de rijen met hun vakken. */
+export type InhoudVak = { id: string; positie: number; status: Status | null; partijen: Partij[] };
+export type InhoudKant = {
+  id: string;
+  kant: "LINKS" | "RECHTS";
+  naam: string;
+  status: Status | null;
+  rijen: { nummer: number; vakken: InhoudVak[] }[];
+};
+export type StellingInhoud = Stelling & {
+  plattegrondId: string;
+  plattegrond: string;
+  kanten: InhoudKant[];
+};
+
+/** Wat de server terugstuurt als producten hun plek zouden kwijtraken (SW-23). */
+export type Geraakt = { plek: string; product: string };
 export type RandActie = "erbij" | "eraf";
 
 export const kort = ({ id, naam, rijen, kolommen }: PlattegrondKort): PlattegrondKort => ({
@@ -116,6 +141,9 @@ export const plattegronden = {
 export const stellingen = {
   maak: (plattegrondId: string, vlak: Vlak, invoer: StellingInvoer) =>
     verstuur<Stelling>(`${pad(plattegrondId)}/stellingen`, { ...vlak, ...invoer }),
-  wijzig: (id: string, invoer: StellingInvoer) => wijzig<Stelling>(stellingPad(id), invoer),
-  verwijder: (id: string) => verwijder(stellingPad(id)),
+  inhoud: (id: string) => haalOp<StellingInhoud>(`${stellingPad(id)}/inhoud`),
+  wijzig: (id: string, invoer: StellingInvoer, losmaken = false) =>
+    wijzig<Stelling>(stellingPad(id), { ...invoer, losmaken }),
+  verwijder: (id: string, losmaken = false) =>
+    verwijder(`${stellingPad(id)}${losmaken ? "?losmaken=ja" : ""}`),
 };

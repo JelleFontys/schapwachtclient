@@ -6,19 +6,19 @@ import { Balk } from "../components/Balk";
 import { Knop } from "../components/Knop";
 import { Melding } from "../components/Melding";
 import { Venster } from "../components/Venster";
+import { Legenda } from "../components/Legenda";
 import { Kiezer } from "../components/plattegrond/Kiezer";
 import { NaamFormulier } from "../components/plattegrond/NaamFormulier";
 import { StellingVenster } from "../components/plattegrond/StellingVenster";
 import { Vloer } from "../components/plattegrond/Vloer";
 import { useSessie } from "../auth/authContext";
 import { meldingVan } from "../data/api";
-import { dikte, kort, plattegronden, stellingen, stellingNaam } from "../data/plattegronden";
+import { dikte, kort, plattegronden, stellingen } from "../data/plattegronden";
 import type {
   Plattegrond,
   PlattegrondKort,
   Rand,
   RandActie,
-  Stelling,
   StellingInvoer,
   Vlak,
 } from "../data/plattegronden";
@@ -44,7 +44,6 @@ export default function PlattegrondPagina() {
   const [detailFout, setDetailFout] = useState<{ id: string; tekst: string } | null>(null);
   const [open, setOpen] = useState<Open>(null);
   const [nieuwVlak, setNieuwVlak] = useState<Vlak | null>(null);
-  const [gekozen, setGekozen] = useState<Stelling | null>(null);
   const [randBezig, setRandBezig] = useState(false);
   const [randFout, setRandFout] = useState<string | null>(null);
 
@@ -123,23 +122,6 @@ export default function PlattegrondPagina() {
     setNieuwVlak(null);
   }
 
-  async function pasStellingAan(invoer: StellingInvoer) {
-    if (!huidig || !gekozen) return;
-    const nieuw = await stellingen.wijzig(gekozen.id, invoer);
-    setDetail({
-      ...huidig,
-      stellingen: huidig.stellingen.map((s) => (s.id === nieuw.id ? nieuw : s)),
-    });
-    setGekozen(null);
-  }
-
-  async function haalStellingWeg() {
-    if (!huidig || !gekozen) return;
-    await stellingen.verwijder(gekozen.id);
-    setDetail({ ...huidig, stellingen: huidig.stellingen.filter((s) => s.id !== gekozen.id) });
-    setGekozen(null);
-  }
-
   // Geen id in de URL: door naar de eerste plattegrond.
   if (!id && lijst && lijst.length > 0) {
     return <Navigate to={`/plattegrond/${lijst[0].id}`} replace />;
@@ -149,7 +131,7 @@ export default function PlattegrondPagina() {
     <>
       <Balk />
 
-      <main className="mx-auto max-w-5xl px-5 py-8 sm:py-10">
+      <main className="mx-auto max-w-5xl px-5 pt-8 pb-28 sm:py-10">
         {lijstFout && <Melding tekst={lijstFout} />}
 
         {!lijst && !lijstFout && <Laden tekst="Plattegronden laden" />}
@@ -178,6 +160,8 @@ export default function PlattegrondPagina() {
 
             {huidig && (
               <section className="mt-8" aria-labelledby="plattegrond-titel">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <h1 id="plattegrond-titel" className="text-3xl font-extrabold tracking-tight">
                     {huidig.naam}
@@ -205,9 +189,12 @@ export default function PlattegrondPagina() {
                 </p>
                 <p className="mt-3 max-w-prose text-sm leading-relaxed text-black-forest/75">
                   {magBeheren
-                    ? "Tik op twee hoeken om een stelling neer te zetten: 1 hokje dik voor één kant, 2 dik voor een linker- en rechterkant. Tik op een stelling om hem in te richten. Met de plusjes maak je de vloer groter."
-                    : "Tik op een stelling om te zien hoe hij is ingericht."}
+                    ? "Tik op twee hoeken om een stelling neer te zetten: 1 hokje dik voor één kant, 2 dik voor een linker- en rechterkant. Tik op een stelling om hem open te klappen. Met de plusjes maak je de vloer groter."
+                    : "Tik op een stelling om te zien wat erin ligt."}
                 </p>
+                </div>
+                <Legenda />
+                </div>
 
                 {randFout && (
                   <div className="mt-4">
@@ -222,7 +209,7 @@ export default function PlattegrondPagina() {
                     bezig={randBezig}
                     pasRandAan={(rand, actie) => void pasRandAan(rand, actie)}
                     kiesVlak={setNieuwVlak}
-                    kiesStelling={setGekozen}
+                    kiesStelling={(stelling) => navigeer(`/stelling/${stelling.id}`)}
                   />
                 </div>
               </section>
@@ -249,23 +236,6 @@ export default function PlattegrondPagina() {
         {nieuwVlak && <StellingVenster vlak={nieuwVlak} alleenLezen={false} bewaar={zetNeer} />}
       </Venster>
 
-      <Venster
-        open={gekozen !== null}
-        sluit={() => setGekozen(null)}
-        titel={gekozen ? stellingNaam(gekozen) : "Stelling"}
-        onder={gekozen ? beschrijfVlak(gekozen) : undefined}
-        breed={magBeheren && gekozen !== null && dikte(gekozen) === 2}
-      >
-        {gekozen && (
-          <StellingVenster
-            vlak={gekozen}
-            begin={{ links: gekozen.links, rechts: gekozen.rechts }}
-            alleenLezen={!magBeheren}
-            bewaar={pasStellingAan}
-            verwijder={haalStellingWeg}
-          />
-        )}
-      </Venster>
     </>
   );
 }

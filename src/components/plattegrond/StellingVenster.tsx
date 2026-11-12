@@ -5,18 +5,28 @@ import { Knop } from "../Knop";
 import { Melding } from "../Melding";
 import { Teller } from "../Teller";
 import { Veld } from "../Veld";
-import { meldingVan } from "../../data/api";
+import { ApiFout, meldingVan } from "../../data/api";
+import { Losmaken } from "../vak/Losmaken";
 import { MAX_RIJEN_PER_KANT, MAX_VAKKEN_PER_RIJ, kantLabels } from "../../data/plattegronden";
-import type { Kant, StellingInvoer, Vlak } from "../../data/plattegronden";
+import type { Geraakt, Kant, StellingInvoer, Vlak } from "../../data/plattegronden";
 
 type Props = {
   vlak: Vlak;
   /** Bij een bestaande stelling: hoe hij nu is ingericht. */
   begin?: StellingInvoer;
   alleenLezen: boolean;
-  bewaar?: (invoer: StellingInvoer) => Promise<void>;
-  verwijder?: () => Promise<void>;
+  /** `losmaken` is true nadat iemand bevestigd heeft dat producten hun plek kwijt mogen raken. */
+  bewaar?: (invoer: StellingInvoer, losmaken: boolean) => Promise<void>;
+  verwijder?: (losmaken: boolean) => Promise<void>;
 };
+
+/** Haalt uit een 409 de lijst met producten die hun plek zouden kwijtraken. */
+function geraaktUit(probleem: unknown): Geraakt[] | null {
+  if (probleem instanceof ApiFout && probleem.status === 409 && Array.isArray(probleem.gegevens.geraakt)) {
+    return probleem.gegevens.geraakt as Geraakt[];
+  }
+  return null;
+}
 
 /** Een nieuwe kant begint met één rij van zoveel producten. */
 const STANDAARD_PLEKKEN = 4;
@@ -41,6 +51,9 @@ export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }:
   const [fout, setFout] = useState<string | null>(null);
   const [bezig, setBezig] = useState(false);
   const [zekerWeten, setZekerWeten] = useState(false);
+  const [geraakt, setGeraakt] = useState<{ lijst: Geraakt[]; doorgaan: () => Promise<void> } | null>(
+    null,
+  );
 
   if (alleenLezen) {
     return (
@@ -72,25 +85,69 @@ export function StellingVenster({ vlak, begin, alleenLezen, bewaar, verwijder }:
       return;
     }
 
-    setBezig(true);
-    try {
-      await bewaar?.({ links, rechts: eenKant ? null : rechts });
-    } catch (probleem) {
-      setFout(meldingVan(probleem, "Opslaan is niet gelukt."));
-      setBezig(false);
-    }
+    const invoer = { links, rechts: eenKant ? null : rechts };
+    await probeer(
+      () => bewaar?.(invoer, false),
+      () => bewaar?.(invoer, true),
+      "Opslaan is niet gelukt.",
+    );
   }
 
   async function weghalen() {
     setFout(null);
+    await probeer(
+      () => verwijder?.(false),
+      () => verwijder?.(true),
+      "Weghalen is niet gelukt.",
+    );
+    setZekerWeten(false);
+  }
+
+  /**
+   * Eerst zonder losmaken. Zegt de server dat er producten hun plek
+   * kwijtraken (409), dan tonen we welke, en pas na "Doorgaan" gaat het
+   * nog een keer, nu met losmaken.
+   */
+  async function probeer(
+    gewoon: () => Promise<void> | undefined,
+    metLosmaken: () => Promise<void> | undefined,
+    melding: string,
+  ) {
     setBezig(true);
     try {
-      await verwijder?.();
+      await gewoon();
     } catch (probleem) {
-      setFout(meldingVan(probleem, "Weghalen is niet gelukt."));
+      const lijst = geraaktUit(probleem);
+      if (lijst) {
+        setGeraakt({
+          lijst,
+          doorgaan: async () => {
+            setBezig(true);
+            try {
+              await metLosmaken();
+            } catch (opnieuw) {
+              setFout(meldingVan(opnieuw, melding));
+              setGeraakt(null);
+              setBezig(false);
+            }
+          },
+        });
+      } else {
+        setFout(meldingVan(probleem, melding));
+      }
       setBezig(false);
-      setZekerWeten(false);
     }
+  }
+
+  if (geraakt) {
+    return (
+      <Losmaken
+        geraakt={geraakt.lijst}
+        bezig={bezig}
+        doorgaan={() => void geraakt.doorgaan()}
+        terug={() => setGeraakt(null)}
+      />
+    );
   }
 
   return (
