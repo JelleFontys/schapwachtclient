@@ -52,8 +52,6 @@ export function Venster({ open, sluit, titel, onder, breed = false, children }: 
           </button>
         </div>
 
-        {/* Alleen tonen als het open is, zodat een formulier elke keer
-            met verse waarden begint. */}
         {open && <div className="mt-5">{children}</div>}
       </div>
     </dialog>

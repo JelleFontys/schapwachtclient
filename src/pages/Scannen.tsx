@@ -8,7 +8,7 @@ import { Melding } from "../components/Melding";
 import { Statusmerk } from "../components/Statusmerk";
 import { Camera } from "../components/vak/Camera";
 import { PartijFormulier } from "../components/vak/PartijFormulier";
-import { PlekKiezer } from "../components/vak/PlekKiezer";
+import { PlekOpPlattegrond } from "../components/vak/PlekOpPlattegrond";
 import { ProductFormulier } from "../components/vak/ProductFormulier";
 import { meldingVan } from "../data/api";
 import { kortDatum } from "../data/datum";
@@ -178,7 +178,6 @@ function Bekend({
   opnieuw: () => void;
 }) {
   const { product, plekken } = gescand;
-  const [gekozenElders, setGekozenElders] = useState<Vak | null>(null);
   const kiesMaarEenPlek = plekken.length === 0 || andereplek;
 
   return (
@@ -250,8 +249,16 @@ function Bekend({
               <h2 className="text-sm font-bold text-black-forest/60">
                 {plekken.length === 0 ? "Dit product ligt nog nergens. Kies een plek:" : "Kies een plek:"}
               </h2>
-              <PlekKiezer kies={setGekozenElders} />
-              <Knop onClick={() => gekozenElders && kiesVak(gekozenElders)}>Verder met deze plek</Knop>
+              <PlekOpPlattegrond kies={kiesVak} />
+              {andereplek && plekken.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setAndereplek(false)}
+                  className="text-sm font-semibold text-olive-leaf hover:text-black-forest"
+                >
+                  Terug naar waar het nu ligt
+                </button>
+              )}
             </div>
           )}
         </>

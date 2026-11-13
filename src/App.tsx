@@ -40,7 +40,6 @@ export default function App() {
             <Route path="/overzicht" element={<Overzicht />} />
             <Route path="/winkel" element={<Winkel />} />
 
-            {/* Onbekend pad: terug naar het begin, dat verwijst verder. */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

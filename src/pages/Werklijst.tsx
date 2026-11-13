@@ -6,8 +6,9 @@ import { Balk } from "../components/Balk";
 import { Knop } from "../components/Knop";
 import { Melding } from "../components/Melding";
 import { Statusmerk } from "../components/Statusmerk";
-import { PlekKiezer } from "../components/vak/PlekKiezer";
+import { PlekOpPlattegrond } from "../components/vak/PlekOpPlattegrond";
 import { Uitkomstkeuze } from "../components/vak/Uitkomstkeuze";
+import { Venster } from "../components/Venster";
 import { meldingVan } from "../data/api";
 import { hoeLang, kortDatum } from "../data/datum";
 import { partijen } from "../data/partijen";
@@ -139,6 +140,9 @@ function Regel({
     setBezig(true);
     try {
       await actie();
+      setStand("niets");
+      setVak(null);
+      setBezig(false);
       klaar(bericht);
     } catch (probleem) {
       setFout(meldingVan(probleem));
@@ -190,32 +194,50 @@ function Regel({
           />
         )}
 
-        {stand === "plaatsen" && (
-          <div className="space-y-3 rounded-xl border border-black-forest/10 p-3">
-            <PlekKiezer kies={setVak} />
-            <div className="flex gap-2">
-              <div className="w-40">
-                <Knop
-                  bezig={bezig}
-                  onClick={() =>
-                    vak
-                      ? void doe(() => partijen.plaats(partij.id, vak.id), `${partij.product.naam} staat nu in ${vak.tekst}.`)
-                      : setFout("Kies eerst een vak.")
-                  }
+        <Venster
+          open={stand === "plaatsen"}
+          sluit={() => {
+            setStand("niets");
+            setVak(null);
+            setFout(null);
+          }}
+          titel={`${partij.product.naam} plaatsen`}
+          breed
+        >
+          {vak ? (
+            <div className="space-y-4">
+              <p className="flex items-center gap-1.5 font-semibold">
+                <MapPin aria-hidden="true" className="size-4 text-olive-leaf" />
+                {vak.tekst}
+              </p>
+              {fout && <p className="text-sm text-copperwood">{fout}</p>}
+              <div className="flex gap-2">
+                <div className="w-48">
+                  <Knop
+                    bezig={bezig}
+                    onClick={() =>
+                      void doe(
+                        () => partijen.plaats(partij.id, vak.id),
+                        `${partij.product.naam} staat nu in ${vak.tekst}.`,
+                      )
+                    }
+                  >
+                    Hier neerzetten
+                  </Knop>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setVak(null)}
+                  className="px-3 text-sm font-semibold text-black-forest/60"
                 >
-                  Hier neerzetten
-                </Knop>
+                  Ander vak
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setStand("niets")}
-                className="px-3 text-sm font-semibold text-black-forest/60"
-              >
-                Annuleren
-              </button>
             </div>
-          </div>
-        )}
+          ) : (
+            <PlekOpPlattegrond kies={setVak} />
+          )}
+        </Venster>
 
         {stand === "niets" && (
           <div className="flex gap-4">

@@ -158,9 +158,6 @@ export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, ki
 
   return (
     <div>
-      {/* Boven de vloer en niet eronder: op een telefoon valt de
-          onderkant van een lange vloer buiten beeld, en dan zie je niet
-          waarom er niets gebeurt. */}
       <p
         aria-live="polite"
         className={`mb-3 min-h-5 text-sm ${melding?.fout ? "font-semibold text-copperwood" : "text-black-forest/70"}`}
@@ -177,9 +174,6 @@ export function Vloer({ plattegrond, magBeheren, bezig, pasRandAan, kiesVlak, ki
         )}
       </p>
 
-      {/* `relative` is nodig: zonder gepositioneerde ouder ontsnapt de
-          verborgen tekst voor schermlezers aan dit scrollkader, en dan
-          wordt op een telefoon de hele pagina te breed. */}
       <div className="relative -mx-5 overflow-x-auto px-5 pb-2">
         <div
           className="mx-auto grid w-max grid-cols-[auto_auto_auto] items-center gap-1.5
