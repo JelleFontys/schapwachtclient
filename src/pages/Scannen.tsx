@@ -88,17 +88,35 @@ export default function Scannen() {
 
         {!klaar && gescand && !gescand.product && (
           <section className="mt-6 space-y-4">
-            <p className="rounded-xl border border-sunlit-clay bg-sunlit-clay/15 px-4 py-3 text-sm">
-              Barcode <strong data-getal>{gescand.barcode}</strong> is nog niet bekend. Vul de naam
-              en de productgroep aan, dan voegen we het product toe.
-            </p>
+            {gescand.openbaar ? (
+              <p className="rounded-xl border border-olive-leaf bg-olive-leaf/10 px-4 py-3 text-sm">
+                Barcode <strong data-getal>{gescand.barcode}</strong> staat in de openbare database
+                (Open Food Facts). Controleer de naam en kies een productgroep.
+              </p>
+            ) : (
+              <p className="rounded-xl border border-sunlit-clay bg-sunlit-clay/15 px-4 py-3 text-sm">
+                Barcode <strong data-getal>{gescand.barcode}</strong> is nog niet bekend.
+                {!gescand.openbaarBereikbaar && " De openbare database was niet bereikbaar."} Vul de
+                naam en de productgroep aan, dan voegen we het product toe.
+              </p>
+            )}
             <ProductFormulier
-              begin={{ naam: "", barcode: gescand.barcode, productgroepId: null }}
+              key={gescand.barcode}
+              begin={{ naam: gescand.openbaar?.naam ?? "", barcode: gescand.barcode, productgroepId: null }}
               barcodeVast
               knoptekst="Product toevoegen en doorgaan"
               bewaar={async (invoer) => {
-                const product = await producten.maak(invoer);
-                setGescand({ barcode: gescand.barcode, product, plekken: [] });
+                const product = await producten.maak({
+                  ...invoer,
+                  uitOpenbareDatabase: gescand.openbaar !== null,
+                });
+                setGescand({
+                  barcode: gescand.barcode,
+                  product,
+                  plekken: [],
+                  openbaar: null,
+                  openbaarBereikbaar: true,
+                });
               }}
               annuleer={opnieuw}
             />

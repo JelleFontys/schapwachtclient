@@ -8,15 +8,23 @@ export type Productgroep = {
   aantalProducten?: number;
 };
 
+export type Bron = "EIGEN" | "OPEN_FOOD_FACTS";
+
 export type Product = {
   id: string;
   naam: string;
   barcode: string | null;
+  bron: Bron;
   productgroep: { id: string; naam: string } | null;
   afprijsDagen: number;
 };
 
-export type ProductInvoer = { naam: string; barcode: string; productgroepId: string | null };
+export type ProductInvoer = {
+  naam: string;
+  barcode: string;
+  productgroepId: string | null;
+  uitOpenbareDatabase?: boolean;
+};
 
 export type Plek = {
   vakId: string;
@@ -33,6 +41,8 @@ export type Gescand = {
   barcode: string;
   product: Product | null;
   plekken: (Plek & { houdbaarTot: string; status: Status })[];
+  openbaar: { naam: string } | null;
+  openbaarBereikbaar: boolean;
 };
 
 const pad = (id: string) => `/api/producten/${encodeURIComponent(id)}`;

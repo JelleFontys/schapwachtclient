@@ -114,32 +114,36 @@ function ProductLijst() {
         </p>
       )}
 
-      {lijst && lijst.length === 0 && (
-        <p className="mt-6 text-sm text-black-forest/70">
-          {zoek ? "Niets gevonden." : "Nog geen producten. Voeg er een toe, of scan een product."}
-        </p>
+      {lijst && (
+        <>
+          <LijstDeel
+            titel="Zelf toegevoegd"
+            producten={lijst.filter((p) => p.bron !== "OPEN_FOOD_FACTS")}
+            leeg={zoek ? "Niets gevonden." : "Nog geen eigen producten. Voeg er een toe met Nieuw product."}
+            kies={setOpen}
+          />
+          <LijstDeel
+            titel="Uit de openbare database"
+            uitleg={
+              <>
+                Gevonden bij het scannen. Gegevens van{" "}
+                <a
+                  href="https://world.openfoodfacts.org"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-olive-leaf underline-offset-2 hover:underline"
+                >
+                  Open Food Facts
+                </a>{" "}
+                (ODbL).
+              </>
+            }
+            producten={lijst.filter((p) => p.bron === "OPEN_FOOD_FACTS")}
+            leeg={zoek ? "Niets gevonden." : "Nog niets. Scan een product, dan zoeken we het hier op."}
+            kies={setOpen}
+          />
+        </>
       )}
-
-      <ul className="mt-4 divide-y divide-black-forest/10 rounded-2xl border border-black-forest/10 bg-white/40">
-        {lijst?.map((p) => (
-          <li key={p.id}>
-            <button
-              type="button"
-              onClick={() => setOpen(p)}
-              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-olive-leaf/5"
-            >
-              <span className="min-w-0">
-                <span className="block truncate font-semibold">{p.naam}</span>
-                <span className="block text-xs text-black-forest/60">
-                  {p.productgroep?.naam ?? "Geen productgroep"} · oranje {p.afprijsDagen}{" "}
-                  {p.afprijsDagen === 1 ? "dag" : "dagen"} voor de datum
-                </span>
-              </span>
-              <span data-getal className="shrink-0 text-xs text-black-forest/50">{p.barcode ?? "geen barcode"}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
 
       <Venster open={open === "nieuw"} sluit={() => setOpen(null)} titel="Nieuw product">
         <ProductFormulier
@@ -164,6 +168,56 @@ function ProductLijst() {
   );
 }
 
+function LijstDeel({
+  titel,
+  uitleg,
+  producten: lijst,
+  leeg,
+  kies,
+}: {
+  titel: string;
+  uitleg?: React.ReactNode;
+  producten: Product[];
+  leeg: string;
+  kies: (product: Product) => void;
+}) {
+  return (
+    <section className="mt-8">
+      <h2 className="text-lg font-extrabold tracking-tight">
+        {titel} <span data-getal className="text-sm font-semibold text-black-forest/50">({lijst.length})</span>
+      </h2>
+      {uitleg && <p className="mt-0.5 text-xs text-black-forest/60">{uitleg}</p>}
+
+      {lijst.length === 0 ? (
+        <p className="mt-3 text-sm text-black-forest/70">{leeg}</p>
+      ) : (
+        <ul className="mt-3 divide-y divide-black-forest/10 rounded-2xl border border-black-forest/10 bg-white/40">
+          {lijst.map((p) => (
+            <li key={p.id}>
+              <button
+                type="button"
+                onClick={() => kies(p)}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-olive-leaf/5"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold">{p.naam}</span>
+                  <span className="block text-xs text-black-forest/60">
+                    {p.productgroep?.naam ?? "Geen productgroep"} · oranje {p.afprijsDagen}{" "}
+                    {p.afprijsDagen === 1 ? "dag" : "dagen"} voor de datum
+                  </span>
+                </span>
+                <span data-getal className="shrink-0 text-xs text-black-forest/50">
+                  {p.barcode ?? "geen barcode"}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function ProductBewerken({
   product,
   magVerwijderen,
@@ -177,8 +231,14 @@ function ProductBewerken({
 
   return (
     <div className="space-y-5">
+      {product.bron === "OPEN_FOOD_FACTS" && (
+        <p className="rounded-xl bg-olive-leaf/10 px-3.5 py-2.5 text-sm">
+          Uit de openbare database. De naam en productgroep kun je aanpassen, de barcode niet.
+        </p>
+      )}
       <ProductFormulier
         begin={{ naam: product.naam, barcode: product.barcode ?? "", productgroepId: product.productgroep?.id ?? null }}
+        barcodeVast={product.bron === "OPEN_FOOD_FACTS"}
         knoptekst="Opslaan"
         bewaar={async (invoer) => {
           await producten.wijzig(product.id, invoer);
