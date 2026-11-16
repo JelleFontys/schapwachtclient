@@ -22,7 +22,27 @@ export const team = {
     wijzig<Lid>(`/api/winkel/medewerkers/${encodeURIComponent(id)}`, { rol }),
 };
 
+export type Advies = "NIET_VERKOCHT" | "AFPRIJZEN_HELPT_NIET" | "EERDER_AFPRIJZEN";
+
+export type LetOp = {
+  product: {
+    id: string;
+    naam: string;
+    productgroep: { id: string; naam: string; afprijsDagen: number } | null;
+  };
+  weggegooid: number;
+  uitverkocht: number;
+  gestickerd: number;
+  stuksWeggegooid: number;
+  aandeel: number;
+  advies: Advies;
+};
+
 export const overzicht = {
+  aandacht: (van: string, tot: string) =>
+    haalOp<{ van: string; tot: string; producten: LetOp[] }>(
+      `/api/overzicht/aandacht?van=${encodeURIComponent(van)}&tot=${encodeURIComponent(tot)}`,
+    ),
   weggegooid: (van: string, tot: string) =>
     haalOp<Overzicht>(
       `/api/overzicht/weggegooid?van=${encodeURIComponent(van)}&tot=${encodeURIComponent(tot)}`,

@@ -2,11 +2,12 @@ import { useEffect, useId, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import { Balk } from "../components/Balk";
+import { LetOpLijst } from "../components/LetOpLijst";
 import { Melding } from "../components/Melding";
 import { meldingVan } from "../data/api";
 import { langDatum, vandaag, verschuif } from "../data/datum";
 import { overzicht } from "../data/team";
-import type { Overzicht as OverzichtGegevens } from "../data/team";
+import type { LetOp, Overzicht as OverzichtGegevens } from "../data/team";
 
 const SNEL = [7, 30, 90];
 
@@ -15,17 +16,16 @@ export default function Overzicht() {
   const totId = useId();
   const [tot, setTot] = useState(vandaag());
   const [van, setVan] = useState(verschuif(vandaag(), -29));
-  const [gegevens, setGegevens] = useState<OverzichtGegevens | null>(null);
+  const [gegevens, setGegevens] = useState<(OverzichtGegevens & { letOp: LetOp[] }) | null>(null);
   const [fout, setFout] = useState<string | null>(null);
 
   useEffect(() => {
     if (!van || !tot) return;
     let weg = false;
-    overzicht
-      .weggegooid(van, tot)
-      .then((g) => {
+    Promise.all([overzicht.weggegooid(van, tot), overzicht.aandacht(van, tot)])
+      .then(([g, a]) => {
         if (weg) return;
-        setGegevens(g);
+        setGegevens({ ...g, letOp: a.producten });
         setFout(null);
       })
       .catch((p: unknown) => !weg && setFout(meldingVan(p)));
@@ -43,8 +43,8 @@ export default function Overzicht() {
       <main className="mx-auto max-w-3xl px-5 pt-6 pb-28 sm:py-10">
         <h1 className="text-3xl font-extrabold tracking-tight">Weggegooid</h1>
         <p className="mt-1 max-w-prose text-sm text-black-forest/70">
-          Alles wat is afgemeld als "weggegooid", per productgroep. Staat een groep steeds
-          bovenaan, dan is het misschien tijd om die eerder af te prijzen.
+          Alles wat is afgemeld als "weggegooid", per productgroep, en welke producten extra
+          aandacht nodig hebben bij het bestellen.
         </p>
 
         <div className="mt-6 flex flex-wrap items-end gap-3">
@@ -101,6 +101,10 @@ export default function Overzicht() {
               {huidig.totaal.zonderAantal > 0 && ` (van ${huidig.totaal.zonderAantal} is het aantal niet bekend)`}
               , van {langDatum(huidig.van)} tot en met {langDatum(huidig.tot)}.
             </p>
+
+            <LetOpLijst producten={huidig.letOp} />
+
+            <h2 className="mt-10 text-xl font-extrabold tracking-tight">Per productgroep</h2>
 
             {huidig.groepen.length === 0 ? (
               <p className="mt-6 rounded-2xl border border-dashed border-black-forest/20 p-6 text-center text-sm text-black-forest/70">

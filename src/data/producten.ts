@@ -15,6 +15,7 @@ export type Product = {
   naam: string;
   barcode: string | null;
   bron: Bron;
+  letOp?: boolean;
   productgroep: { id: string; naam: string } | null;
   afprijsDagen: number;
 };

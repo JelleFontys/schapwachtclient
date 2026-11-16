@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from "react";
-import { Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { Loader2, Plus, Search, Trash2, TriangleAlert } from "lucide-react";
 
 import { Balk } from "../components/Balk";
 import { Knop } from "../components/Knop";
@@ -200,7 +200,15 @@ function LijstDeel({
                 className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-olive-leaf/5"
               >
                 <span className="min-w-0">
-                  <span className="block truncate font-semibold">{p.naam}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="truncate font-semibold">{p.naam}</span>
+                    {p.letOp && (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-copperwood bg-copperwood/10 px-2 py-0.5 text-[11px] font-bold text-copperwood">
+                        <TriangleAlert aria-hidden="true" className="size-3" />
+                        Vaak weggegooid
+                      </span>
+                    )}
+                  </span>
                   <span className="block text-xs text-black-forest/60">
                     {p.productgroep?.naam ?? "Geen productgroep"} · oranje {p.afprijsDagen}{" "}
                     {p.afprijsDagen === 1 ? "dag" : "dagen"} voor de datum
